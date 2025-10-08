@@ -12,59 +12,59 @@ const APP_SECRET = process.env.META_APP_SECRET;
  * Handles the webhook verification challenge from Meta.
  */
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const mode = searchParams.get("hub.mode");
-  const token = searchParams.get("hub.verify_token");
-  const challenge = searchParams.get("hub.challenge");
+    const { searchParams } = new URL(req.url);
+    const mode = searchParams.get("hub.mode");
+    const token = searchParams.get("hub.verify_token");
+    const challenge = searchParams.get("hub.challenge");
 
-  if (mode === "subscribe" && token === VERIFY_TOKEN) {
-    console.log("Webhook verified successfully!");
-    return new NextResponse(challenge, { status: 200 });
-  } else {
-    console.error("Webhook verification failed.");
-    return new NextResponse("Forbidden", { status: 403 });
-  }
+    if (mode === "subscribe" && token === VERIFY_TOKEN) {
+        console.log("Webhook verified successfully!");
+        return new NextResponse(challenge, { status: 200 });
+    } else {
+        console.error("Webhook verification failed.");
+        return new NextResponse("Forbidden", { status: 403 });
+    }
 }
 
 /**
  * Handles incoming messages and events from Meta.
  */
 export async function POST(req: NextRequest) {
-  const signature = req.headers.get("x-hub-signature-256") ?? "";
-  const body = await req.text();
+    const signature = req.headers.get("x-hub-signature-256") ?? "";
+    const body = await req.text();
 
-  const expectedSignature = `sha256=${crypto
-    .createHmac("sha256", APP_SECRET!)
-    .update(body)
-    .digest("hex")}`;
+    const expectedSignature = `sha256=${crypto
+        .createHmac("sha256", APP_SECRET!)
+        .update(body)
+        .digest("hex")}`;
 
-  if (signature !== expectedSignature) {
-    console.warn("Invalid webhook signature received.");
-    return new NextResponse("Invalid signature", { status: 401 });
-  }
-
-  const payload = JSON.parse(body);
-  console.log('Webhook payload received:', JSON.stringify(payload, null, 2));
-
-  if (payload.object === "page") {
-    for (const entry of payload.entry) {
-      for (const event of entry.messaging) {
-        console.log('Processing event:', JSON.stringify(event, null, 2));
-        if (event.message) {
-          if (event.message.quick_reply) {
-            processQuickReply(event);
-          } else if (!event.message.is_echo) {
-            processMessage(event);
-          }
-        } else if (event.postback) {
-          console.log('Postback detected:', event.postback);
-          processPostback(event);
-        }
-      }
+    if (signature !== expectedSignature) {
+        console.warn("Invalid webhook signature received.");
+        return new NextResponse("Invalid signature", { status: 401 });
     }
-  }
 
-  return NextResponse.json({ status: "success" }, { status: 200 });
+    const payload = JSON.parse(body);
+    console.log('Webhook payload received:', JSON.stringify(payload, null, 2));
+
+    if (payload.object === "page") {
+        for (const entry of payload.entry) {
+            for (const event of entry.messaging) {
+                console.log('Processing event:', JSON.stringify(event, null, 2));
+                if (event.message) {
+                    if (event.message.quick_reply) {
+                        processQuickReply(event);
+                    } else if (!event.message.is_echo) {
+                        processMessage(event);
+                    }
+                } else if (event.postback) {
+                    console.log('Postback detected:', event.postback);
+                    processPostback(event);
+                }
+            }
+        }
+    }
+
+    return NextResponse.json({ status: "success" }, { status: 200 });
 }
 
 /**
@@ -100,20 +100,20 @@ async function processPostback(event: any) {
 
         const currentNode = chatbot.flow_json.nodes.find((n: any) => n.id === session.current_node_id);
         console.log('Current node:', currentNode ? `${currentNode.id} (${currentNode.type})` : 'not found');
-        
+
         // Handle card button postbacks
         if (currentNode && currentNode.type === 'cardNode' && payload.startsWith('CARD_BUTTON_')) {
             const buttonIndex = parseInt(payload.replace('CARD_BUTTON_', ''));
             const sourceHandleId = `button-${buttonIndex}`;
-            
+
             console.log(`Card button ${buttonIndex} clicked, looking for handle: ${sourceHandleId}`);
             console.log('Current node buttons:', JSON.stringify(currentNode.data.buttons));
-            
+
             let nextNode = findNextNode(chatbot.flow_json, currentNode.id, sourceHandleId);
-            
+
             if (nextNode) {
                 console.log(`Found next node: ${nextNode.id} (${nextNode.type})`);
-                
+
                 if (nextNode.type === 'loopNode') {
                     const targetNodeId = nextNode.data.targetNodeId;
                     if (targetNodeId) {
@@ -123,11 +123,11 @@ async function processPostback(event: any) {
                         }
                     }
                 }
-                
+
                 await sendNodeMessage(senderId, nextNode, messengerAccount.accessToken);
                 session.current_node_id = nextNode.id;
                 await session.save();
-                
+
                 if (nextNode.type !== 'endNode') {
                     await autoContinueFlow(chatbot.flow_json, nextNode, senderId, session, messengerAccount.accessToken);
                 }
@@ -145,7 +145,7 @@ async function processPostback(event: any) {
             if (!currentNode || currentNode.type !== 'quickReplyNode') return;
 
             // Find the index of the clicked reply - use case-insensitive comparison
-            const replyIndex = currentNode.data.replies.findIndex((r: any) => 
+            const replyIndex = currentNode.data.replies.findIndex((r: any) =>
                 r.title.toUpperCase() === replyTitleFromPayload.toUpperCase()
             );
             if (replyIndex === -1) {
@@ -157,7 +157,7 @@ async function processPostback(event: any) {
             console.log(`Quick reply clicked: "${replyTitleFromPayload}" (index: ${replyIndex})`);
             const sourceHandleId = `handle-${replyIndex}`;
             console.log(`Looking for edge from node ${currentNode.id} with sourceHandle: ${sourceHandleId}`);
-            
+
             // Find the next node connected to this specific handle
             let nextNode = findNextNode(chatbot.flow_json, currentNode.id, sourceHandleId);
 
@@ -185,7 +185,7 @@ async function processPostback(event: any) {
                 console.log(`Available edges:`, JSON.stringify(chatbot.flow_json.edges));
             }
         }
-    } catch(error) {
+    } catch (error) {
         console.error("Error processing postback:", error);
     }
 }
@@ -232,7 +232,7 @@ async function processQuickReply(event: any) {
         }
 
         // Find the index of the clicked reply - use case-insensitive comparison
-        const replyIndex = currentNode.data.replies.findIndex((r: any) => 
+        const replyIndex = currentNode.data.replies.findIndex((r: any) =>
             r.title.toUpperCase() === replyTitleFromPayload.toUpperCase()
         );
         if (replyIndex === -1) {
@@ -245,13 +245,13 @@ async function processQuickReply(event: any) {
         const sourceHandleId = `handle-${replyIndex}`;
         console.log(`Looking for edge from node ${currentNode.id} with sourceHandle: ${sourceHandleId}`);
         console.log(`All edges:`, JSON.stringify(chatbot.flow_json.edges, null, 2));
-        
+
         // Find the next node connected to this specific handle
         let nextNode = findNextNode(chatbot.flow_json, currentNode.id, sourceHandleId);
 
         if (nextNode) {
             console.log(`Found next node: ${nextNode.id} (${nextNode.type})`);
-            
+
             // Handle loop node
             if (nextNode.type === 'loopNode') {
                 const targetNodeId = nextNode.data.targetNodeId;
@@ -269,7 +269,7 @@ async function processQuickReply(event: any) {
                     return;
                 }
             }
-            
+
             await sendNodeMessage(senderId, nextNode, messengerAccount.accessToken);
             session.current_node_id = nextNode.id;
             await session.save();
@@ -285,11 +285,11 @@ async function processQuickReply(event: any) {
             console.log(`No next node found for edge from node ${currentNode.id} with sourceHandle ${sourceHandleId}.`);
             console.log(`This quick reply option has no connected path. Conversation paused.`);
             // Send a fallback message
-            await sendMessage(senderId, { 
-                text: "Sorry, this option is not configured yet. Please try another option or send a new message." 
+            await sendMessage(senderId, {
+                text: "Sorry, this option is not configured yet. Please try another option or send a new message."
             }, messengerAccount.accessToken);
         }
-    } catch(error) {
+    } catch (error) {
         console.error("Error processing quick reply:", error);
     }
 }
@@ -298,123 +298,134 @@ async function processQuickReply(event: any) {
  * Processes an incoming message event.
  */
 async function processMessage(event: any) {
-  try {
-    const senderId = event.sender.id;
-    const recipientId = event.recipient.id;
-    const messageText = event.message.text?.trim();
+    try {
+        const senderId = event.sender.id;
+        const recipientId = event.recipient.id;
+        const messageText = event.message.text?.trim();
 
-    await connectToDatabase();
+        await connectToDatabase();
 
-    const messengerAccount = await MessengerAccount.findOne({ accountId: recipientId });
-    if (!messengerAccount) return console.log(`No account for page ID: ${recipientId}`);
+        const messengerAccount = await MessengerAccount.findOne({ accountId: recipientId });
+        if (!messengerAccount) return console.log(`No account for page ID: ${recipientId}`);
 
-    const chatbot = await Chatbot.findOne({ 
-      accountId: messengerAccount._id, 
-      mode: { $in: ['active', 'test'] }
-    });
-    if (!chatbot) return console.log(`No active bot for account: ${messengerAccount.accountName}`);
+        const chatbot = await Chatbot.findOne({
+            accountId: messengerAccount._id,
+            mode: { $in: ['active', 'test'] }
+        });
+        if (!chatbot) return console.log(`No active bot for account: ${messengerAccount.accountName}`);
 
-    // Handle test mode
-    if (chatbot.mode === 'test') {
-      const isAlreadyTester = chatbot.testers.some((t: any) => t.user_psid === senderId);
-      
-      // Check if message matches test trigger (case-insensitive, trimmed)
-      if (messageText && chatbot.testTrigger && messageText.toLowerCase() === chatbot.testTrigger.toLowerCase()) {
-        if (!isAlreadyTester) {
-          // Add the user to the testers list
-          await Chatbot.findByIdAndUpdate(chatbot._id, {
-            $push: { testers: { user_psid: senderId, addedAt: new Date() } }
-          });
-          console.log(`SUCCESS: User ${senderId} has been added as a tester.`);
-          await sendMessage(senderId, { 
-            text: "✅ You are now an authorized tester! Send any message to begin the chatbot flow." 
-          }, messengerAccount.accessToken);
-        } else {
-          console.log(`User ${senderId} is already a tester.`);
-          await sendMessage(senderId, { 
-            text: "You are already a tester. You can start interacting with the bot." 
-          }, messengerAccount.accessToken);
+        // --- FIX: MOVED TEST MODE LOGIC TO THE TOP ---
+        // The test trigger is a special command that must be checked BEFORE any session/flow logic.
+        if (chatbot.mode === 'test') {
+            const isAlreadyTester = chatbot.testers.some((t: any) => t.user_psid === senderId);
+
+            // Check if message matches test trigger (case-insensitive)
+            if (messageText && chatbot.testTrigger && messageText.toLowerCase() === chatbot.testTrigger.toLowerCase()) {
+                if (!isAlreadyTester) {
+                    // Add the user to the testers list
+                    chatbot.testers.push({ user_psid: senderId, addedAt: new Date() });
+                    await chatbot.save();
+                    console.log(`SUCCESS: User ${senderId} has been added as a tester.`);
+                    await sendMessage(senderId, {
+                        text: "✅ You are now an authorized tester! Send any message to begin the chatbot flow."
+                    }, messengerAccount.accessToken);
+                } else {
+                    console.log(`User ${senderId} is already a tester.`);
+                    await sendMessage(senderId, {
+                        text: "You are already a tester. You can start interacting with the bot."
+                    }, messengerAccount.accessToken);
+                }
+                // The trigger's only job is to add the user, so we stop here.
+                return;
+            }
+
+            // If it's a normal message, check if the user is an authorized tester before proceeding.
+            if (!isAlreadyTester) {
+                console.log(`Test mode: User ${senderId} not authorized, ignoring message`);
+                return;
+            }
         }
-        // The trigger's only job is to add the user, so we stop here
-        return;
-      }
+        // --- END OF FIX ---
 
-      // If it's a normal message, check if the user is an authorized tester
-      if (!isAlreadyTester) {
-        console.log(`Test mode: User ${senderId} not authorized, ignoring message`);
-        return;
-      }
-    }
+        // Now, proceed with the regular flow logic for active users or authorized testers.
+        let session = await UserSession.findOne({ user_psid: senderId, accountId: messengerAccount._id });
+        const chatbotId = chatbot._id;
 
-    let session = await UserSession.findOne({ user_psid: senderId, accountId: messengerAccount._id });
-    const chatbotId = chatbot._id;
-    
-    let currentNodeId;
-    if (!session || session.chatbotId?.toString() !== chatbotId.toString()) {
-      const startNode = chatbot.flow_json.nodes.find((node: any) => node.type === 'input');
-      if (!startNode) return console.log("No 'start' node found in flow.");
-      currentNodeId = startNode.id;
-      
-      session = await UserSession.findOneAndUpdate(
-          { user_psid: senderId, accountId: messengerAccount._id },
-          { current_node_id: currentNodeId, chatbotId },
-          { new: true, upsert: true }
-      );
-      console.log(`Created/updated session for user ${senderId}, starting at node ${currentNodeId}`);
-    } else {
-      currentNodeId = session.current_node_id;
-    }
+        let currentNodeId;
+        // Check if the user is starting a new conversation or interacting with a different bot
+        if (!session || session.chatbotId?.toString() !== chatbotId.toString()) {
+            const startNode = chatbot.flow_json.nodes.find((node: any) => node.type === 'input');
+            if (!startNode) return console.log("No 'start' node found in flow.");
+            currentNodeId = startNode.id;
 
-    const currentNode = chatbot.flow_json.nodes.find((n: any) => n.id === currentNodeId);
-    if (currentNode && currentNode.type === 'quickReplyNode') return;
+            // Create or update the session to start from the beginning
+            session = await UserSession.findOneAndUpdate(
+                { user_psid: senderId, accountId: messengerAccount._id },
+                { current_node_id: currentNodeId, chatbotId },
+                { new: true, upsert: true }
+            );
+            console.log(`Created/updated session for user ${senderId}, starting at node ${currentNodeId}`);
+        } else {
+            currentNodeId = session.current_node_id;
+        }
 
-    const nextNode = findNextNode(chatbot.flow_json, currentNodeId);
+        const currentNode = chatbot.flow_json.nodes.find((n: any) => n.id === currentNodeId);
 
-    if (nextNode) {
-      let nodeToSend = nextNode;
-      
-      // Handle loop node
-      if (nextNode.type === 'loopNode') {
-        const targetNodeId = nextNode.data.targetNodeId;
-        if (targetNodeId) {
-          const targetNode = chatbot.flow_json.nodes.find((n: any) => n.id === targetNodeId);
-          if (targetNode) {
-            console.log(`Loop node redirecting to node ${targetNodeId}`);
-            nodeToSend = targetNode;
-          } else {
-            console.log(`Loop target node ${targetNodeId} not found`);
+        // If the user types text while at a quick reply node, we shouldn't proceed.
+        // This prevents the bot from continuing down a default path when it needs a specific button click.
+        if (currentNode && currentNode.type === 'quickReplyNode') {
+            console.log(`User ${senderId} sent text while at a quick reply node. Waiting for button click.`);
             return;
-          }
-        } else {
-          console.log(`Loop node has no target configured`);
-          return;
         }
-      }
-      
-      await sendNodeMessage(senderId, nodeToSend, messengerAccount.accessToken);
-      session.current_node_id = nodeToSend.id;
-      await session.save();
-      
-      if (nodeToSend.type === 'endNode') {
-        console.log(`End node reached for user ${senderId}. Conversation ended.`);
-        return;
-      }
 
-      // Auto-continue if waitForReply is false
-      await autoContinueFlow(chatbot.flow_json, nodeToSend, senderId, session, messengerAccount.accessToken);
-    } else {
-      console.log(`End of flow reached for user ${senderId} at node ${currentNodeId}`);
+        // Find the next node from the current one (assuming a single, non-handled exit)
+        const nextNode = findNextNode(chatbot.flow_json, currentNodeId);
+
+        if (nextNode) {
+            let nodeToSend = nextNode;
+
+            // Handle loop node redirection
+            if (nextNode.type === 'loopNode') {
+                const targetNodeId = nextNode.data.targetNodeId;
+                if (targetNodeId) {
+                    const targetNode = chatbot.flow_json.nodes.find((n: any) => n.id === targetNodeId);
+                    if (targetNode) {
+                        console.log(`Loop node redirecting to node ${targetNodeId}`);
+                        nodeToSend = targetNode;
+                    } else {
+                        console.log(`Loop target node ${targetNodeId} not found`);
+                        return;
+                    }
+                } else {
+                    console.log(`Loop node has no target configured`);
+                    return;
+                }
+            }
+
+            await sendNodeMessage(senderId, nodeToSend, messengerAccount.accessToken);
+            session.current_node_id = nodeToSend.id;
+            await session.save();
+
+            if (nodeToSend.type === 'endNode') {
+                console.log(`End node reached for user ${senderId}. Conversation ended.`);
+                return;
+            }
+
+            // Auto-continue the flow if the next nodes don't wait for a reply
+            await autoContinueFlow(chatbot.flow_json, nodeToSend, senderId, session, messengerAccount.accessToken);
+        } else {
+            console.log(`End of flow reached for user ${senderId} at node ${currentNodeId}`);
+        }
+    } catch (error) {
+        console.error("Error processing message:", error);
     }
-  } catch (error) {
-    console.error("Error processing message:", error);
-  }
 }
 
 /**
  * Finds the next node in the flow based on the current node ID and optional handle.
  */
 function findNextNode(flow: any, currentNodeId: string, sourceHandle?: string) {
-    const edge = flow.edges.find((e: any) => 
+    const edge = flow.edges.find((e: any) =>
         e.source === currentNodeId && (sourceHandle ? e.sourceHandle === sourceHandle : !e.sourceHandle)
     );
     if (!edge) return null;
@@ -425,92 +436,92 @@ function findNextNode(flow: any, currentNodeId: string, sourceHandle?: string) {
  * Sends a message to the user based on the node type.
  */
 async function sendNodeMessage(psid: string, node: any, accessToken: string) {
-  if (node.type === 'messageNode') {
-    await sendMessage(psid, { text: node.data.message }, accessToken);
-  } else if (node.type === 'quickReplyNode') {
-    const quickReplies = node.data.replies.map((reply: any) => ({
-        content_type: 'text',
-        title: reply.title,
-        payload: `QUICK_REPLY_PAYLOAD_${reply.title.toUpperCase().replace(/ /g, '_')}`,
-    }));
-    await sendMessage(psid, { text: node.data.message, quick_replies: quickReplies }, accessToken);
-  } else if (node.type === 'cardNode') {
-    const element: any = {
-      title: node.data.title,
-    };
-    
-    if (node.data.subtitle) {
-      element.subtitle = node.data.subtitle;
-    }
-    
-    if (node.data.imageUrl) {
-      element.image_url = node.data.imageUrl;
-    }
-    
-    if (node.data.buttons && node.data.buttons.length > 0) {
-      element.buttons = node.data.buttons.map((btn: any, index: number) => {
-        if (btn.type === 'web_url') {
-          return {
-            type: 'web_url',
-            url: btn.url,
-            title: btn.title,
-          };
-        } else {
-          return {
-            type: 'postback',
-            title: btn.title,
-            payload: `CARD_BUTTON_${index}`,
-          };
+    if (node.type === 'messageNode') {
+        await sendMessage(psid, { text: node.data.message }, accessToken);
+    } else if (node.type === 'quickReplyNode') {
+        const quickReplies = node.data.replies.map((reply: any) => ({
+            content_type: 'text',
+            title: reply.title,
+            payload: `QUICK_REPLY_PAYLOAD_${reply.title.toUpperCase().replace(/ /g, '_')}`,
+        }));
+        await sendMessage(psid, { text: node.data.message, quick_replies: quickReplies }, accessToken);
+    } else if (node.type === 'cardNode') {
+        const element: any = {
+            title: node.data.title,
+        };
+
+        if (node.data.subtitle) {
+            element.subtitle = node.data.subtitle;
         }
-      });
+
+        if (node.data.imageUrl) {
+            element.image_url = node.data.imageUrl;
+        }
+
+        if (node.data.buttons && node.data.buttons.length > 0) {
+            element.buttons = node.data.buttons.map((btn: any, index: number) => {
+                if (btn.type === 'web_url') {
+                    return {
+                        type: 'web_url',
+                        url: btn.url,
+                        title: btn.title,
+                    };
+                } else {
+                    return {
+                        type: 'postback',
+                        title: btn.title,
+                        payload: `CARD_BUTTON_${index}`,
+                    };
+                }
+            });
+        }
+
+        await sendMessage(psid, {
+            attachment: {
+                type: 'template',
+                payload: {
+                    template_type: 'generic',
+                    elements: [element],
+                },
+            },
+        }, accessToken);
+    } else if (node.type === 'endNode') {
+        if (node.data.sendMessage !== false && node.data.message) {
+            await sendMessage(psid, { text: node.data.message }, accessToken);
+        } else {
+            console.log(`End node reached - no message sent (sendMessage: ${node.data.sendMessage})`);
+        }
+    } else if (node.type === 'loopNode') {
+        console.log(`Loop node ${node.id} encountered - should not send message directly`);
     }
-    
-    await sendMessage(psid, {
-      attachment: {
-        type: 'template',
-        payload: {
-          template_type: 'generic',
-          elements: [element],
-        },
-      },
-    }, accessToken);
-  } else if (node.type === 'endNode') {
-    if (node.data.sendMessage !== false && node.data.message) {
-      await sendMessage(psid, { text: node.data.message }, accessToken);
-    } else {
-      console.log(`End node reached - no message sent (sendMessage: ${node.data.sendMessage})`);
-    }
-  } else if (node.type === 'loopNode') {
-    console.log(`Loop node ${node.id} encountered - should not send message directly`);
-  }
 }
 
 /**
  * Sends a message back to the user via the Graph API.
  */
 async function sendMessage(psid: string, messagePayload: object, accessToken: string) {
-  const url = `https://graph.facebook.com/v20.0/me/messages?access_token=${accessToken}`;
-  const payload = {
-    recipient: { id: psid },
-    message: messagePayload,
-    messaging_type: "RESPONSE",
-  };
+    const url = `https://graph.facebook.com/v20.0/me/messages?access_token=${accessToken}`;
+    const payload = {
+        recipient: { id: psid },
+        message: messagePayload,
+        messaging_type: "RESPONSE",
+    };
 
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    const data = await response.json();
-    if (data.error) {
-      console.error("Graph API error:", data.error);
-    } else {
-      console.log(`Message sent successfully to PSID: ${psid}`);
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+        const data = await response.json();
+        if (data.error) {
+            console.error("Graph API error:", data.error);
+        } else {
+            console.log(`Message sent successfully to PSID: ${psid}`);
+        }
+    } catch (error) {
+        console.error("Failed to send message:", error);
     }
-  } catch (error) {
-    console.error("Failed to send message:", error);
-  }
 }
 
 /**
@@ -519,9 +530,9 @@ async function sendMessage(psid: string, messagePayload: object, accessToken: st
  */
 async function autoContinueFlow(flow: any, currentNode: any, senderId: string, session: any, accessToken: string) {
     let node = currentNode;
-    
+
     console.log(`Starting autoContinueFlow from node ${node.id}, type: ${node.type}`);
-    
+
     while (node) {
         // For card nodes, check if they have only web_url buttons (no postback buttons)
         // If so, auto-continue through the default-output
@@ -546,9 +557,9 @@ async function autoContinueFlow(flow: any, currentNode: any, senderId: string, s
 
         // Check if we should wait for reply (default to true if undefined)
         const shouldWait = node.data.waitForReply !== false;
-        
+
         console.log(`Node ${node.id}: waitForReply=${node.data.waitForReply}, shouldWait=${shouldWait}`);
-        
+
         // Stop if this node waits for reply, is a quick reply, or is an end node
         if (shouldWait || node.type === 'quickReplyNode' || node.type === 'endNode') {
             console.log(`Stopping auto-continue at node ${node.id} (shouldWait: ${shouldWait}, type: ${node.type})`);
@@ -582,7 +593,7 @@ async function autoContinueFlow(flow: any, currentNode: any, senderId: string, s
         }
 
         console.log(`Auto-continuing to node ${nodeToSend.id} (type: ${nodeToSend.type})`);
-        
+
         // Send the message
         await sendNodeMessage(senderId, nodeToSend, accessToken);
         session.current_node_id = nodeToSend.id;

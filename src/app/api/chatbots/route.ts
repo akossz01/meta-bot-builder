@@ -3,25 +3,46 @@ import { jwtVerify } from "jose";
 import connectToDatabase from "@/lib/mongodb";
 import Chatbot from "@/models/Chatbot";
 import MessengerAccount from "@/models/MessengerAccount";
+import { Types } from "mongoose";
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
+
+// Helper function to get User ID from the token
+async function getUserIdFromRequest(req: NextRequest): Promise<string | null> {
+  const token = req.cookies.get("token")?.value;
+  if (!token) return null;
+  try {
+    const { payload } = await jwtVerify(token, JWT_SECRET);
+    // Accommodates different possible claim names for user ID
+    return (payload.userId || payload.sub || payload.id) as string;
+  } catch (error) {
+    console.error("JWT Verification failed:", error);
+    return null;
+  }
+}
 
 // GET all chatbots for the logged-in user
 export async function GET(req: NextRequest) {
   try {
-    const tokenCookie = req.cookies.get("token");
-    if (!tokenCookie) throw new Error("Authentication required.");
-    const { payload } = await jwtVerify(tokenCookie.value, JWT_SECRET);
-    const userId = payload.userId;
+    const userId = await getUserIdFromRequest(req);
+    if (!userId) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
 
     await connectToDatabase();
 
-    const chatbots = await Chatbot.find({ userId }).populate('accountId', 'accountName accountId accessToken');
+    // The FIX is here: We add .select('+testTrigger') to explicitly fetch the field.
+    const chatbots = await Chatbot.find({ userId: new Types.ObjectId(userId) })
+      .populate('accountId', 'accountName accountId accessToken')
+      .select('+testTrigger') // <--- THIS IS THE CRITICAL FIX
+      .sort({ createdAt: -1 });
     
-    // Fetch profile pictures for each page
+    // Your existing logic for fetching profile pictures is good, so we keep it.
     const chatbotsWithPictures = await Promise.all(
       chatbots.map(async (bot) => {
-        const botObj = bot.toObject();
+        // Convert Mongoose doc to a plain object to modify it
+        const botObj = bot.toObject({ virtuals: true }); // Ensure virtuals like isActive are included
+        
         if (botObj.accountId && botObj.accountId.accountId && botObj.accountId.accessToken) {
           try {
             const response = await fetch(
@@ -34,7 +55,7 @@ export async function GET(req: NextRequest) {
             botObj.accountId.pictureUrl = null;
           }
         }
-        // Remove accessToken from response for security
+        // Remove accessToken from the response for security
         if (botObj.accountId) {
           delete botObj.accountId.accessToken;
         }
@@ -53,12 +74,12 @@ export async function GET(req: NextRequest) {
 // POST to create a new chatbot
 export async function POST(req: NextRequest) {
     try {
-        const tokenCookie = req.cookies.get("token");
-        if (!tokenCookie) throw new Error("Authentication required.");
-        const { payload } = await jwtVerify(tokenCookie.value, JWT_SECRET);
-        const userId = payload.userId;
+        const userId = await getUserIdFromRequest(req);
+        if (!userId) {
+          return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+        }
     
-        const { name, accountId } = await req.json(); // accountId is the _id of the MessengerAccount
+        const { name, accountId } = await req.json();
         if (!name || !accountId) {
             return NextResponse.json({ message: "Name and accountId are required." }, { status: 400 });
         }
@@ -71,20 +92,18 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ message: "Account not found or access denied." }, { status: 404 });
         }
 
-        // Check if another active bot exists for this account
-        const existingActiveBot = await Chatbot.findOne({ accountId, userId, isActive: true });
-
         const newChatbot = new Chatbot({
             name,
             accountId,
             userId,
-            isActive: !existingActiveBot, // Set to true only if no other bot is active
         });
         await newChatbot.save();
     
         return NextResponse.json(newChatbot, { status: 201 });
+
     } catch (error: any) {
-        if (error.code === 11000) { // Handle duplicate name error
+        // Handle duplicate name error (from the unique index on the model)
+        if (error.code === 11000) {
             return NextResponse.json({ message: "A chatbot with this name already exists for the selected page." }, { status: 409 });
         }
         console.error("Failed to create chatbot:", error);
