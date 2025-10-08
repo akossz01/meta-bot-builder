@@ -57,19 +57,47 @@ export async function PUT(
       return NextResponse.json({ message: "Chatbot not found or you do not have permission" }, { status: 404 });
     }
 
-    // If we are switching to 'test' mode and the bot has no trigger, create one.
-    if (mode === 'test' && !chatbot.testTrigger) {
-      chatbot.testTrigger = generateTestTrigger();
-      console.log(`Generated new testTrigger ${chatbot.testTrigger} for old bot ${chatbot._id}`);
+    // If switching to 'active', deactivate other ACTIVE chatbots for the same page
+    if (mode === 'active') {
+      await Chatbot.updateMany(
+        {
+          accountId: chatbot.accountId,
+          userId: new Types.ObjectId(userId),
+          _id: { $ne: new Types.ObjectId(chatbotId) },
+          mode: 'active'
+        },
+        { $set: { mode: 'inactive' } }
+      );
+      console.log(`Deactivated other active chatbots for account ${chatbot.accountId}`);
+    }
+
+    // If switching to 'test', deactivate other TEST chatbots for the same page
+    if (mode === 'test') {
+      await Chatbot.updateMany(
+        {
+          accountId: chatbot.accountId,
+          userId: new Types.ObjectId(userId),
+          _id: { $ne: new Types.ObjectId(chatbotId) },
+          mode: 'test'
+        },
+        { $set: { mode: 'inactive' } }
+      );
+      console.log(`Deactivated other test chatbots for account ${chatbot.accountId}`);
+      
+      // Generate test trigger if not exists
+      if (!chatbot.testTrigger) {
+        chatbot.testTrigger = generateTestTrigger();
+        console.log(`Generated new testTrigger ${chatbot.testTrigger} for bot ${chatbot._id}`);
+      }
     }
 
     // Set the new mode
     chatbot.mode = mode;
     
-    // Save all changes (both mode and the potential new trigger)
+    // Save all changes
     const updatedChatbot = await chatbot.save();
 
-    // Convert to a plain object to ensure all fields, including the new trigger, are in the response
+    // Convert to a plain object to ensure all fields are in the response
     const responseObj = updatedChatbot.toObject({ virtuals: true });
     
     return NextResponse.json(responseObj);

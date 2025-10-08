@@ -29,6 +29,7 @@ import { CardNode } from '@/components/dashboard/nodes/CardNode';
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useToast } from "@/hooks/use-toast";
 
 // Color palette for nodes
 const NODE_COLORS = [
@@ -119,6 +120,7 @@ export default function ChatbotBuilderPage() {
   const params = useParams();
   const chatbotId = params.chatbotId as string;
   const router = useRouter();
+  const { toast } = useToast();
 
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
@@ -259,7 +261,11 @@ export default function ChatbotBuilderPage() {
         if (nodeIds.length !== uniqueIds.size) {
             const duplicates = nodeIds.filter((id, index) => nodeIds.indexOf(id) !== index);
             console.error('Duplicate node IDs found:', duplicates);
-            alert(`Error: Duplicate node IDs detected (${duplicates.join(', ')}). Please refresh the page and try again.`);
+            toast({
+              title: "Error",
+              description: `Duplicate node IDs detected (${duplicates.join(', ')}). Please refresh the page and try again.`,
+              variant: "destructive"
+            });
             return;
         }
 
@@ -323,10 +329,18 @@ export default function ChatbotBuilderPage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ flow_json: flowToSave })
         });
-        // Add a toast notification here in a real app
+        
+        toast({
+          title: "Success",
+          description: "Flow saved successfully",
+        });
     } catch (error) {
         console.error("Failed to save flow", error);
-        alert('Failed to save flow. Please try again.');
+        toast({
+          title: "Error",
+          description: "Failed to save flow. Please try again.",
+          variant: "destructive"
+        });
     } finally {
         setIsSaving(false);
     }

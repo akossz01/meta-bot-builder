@@ -35,6 +35,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 // Types
 type ConnectedAccount = { _id: string; accountId: string; accountName: string; };
@@ -62,6 +63,7 @@ export default function ChatbotsPage() {
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [changingModeId, setChangingModeId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const fetchChatbots = async () => {
     setIsLoading(true);
@@ -141,16 +143,24 @@ export default function ChatbotsPage() {
 
       const updatedChatbot = await response.json();
       
-      // Update the state directly instead of re-fetching the whole list
       setChatbots(currentChatbots =>
         currentChatbots.map(bot =>
-          bot._id === chatbotId ? { ...bot, mode: updatedChatbot.mode } : bot
+          bot._id === chatbotId ? { ...bot, mode: updatedChatbot.mode, testTrigger: updatedChatbot.testTrigger } : bot
         )
       );
       
-    } catch (error) {
+      toast({
+        title: "Success",
+        description: `Chatbot mode changed to ${mode}`,
+      });
+      
+    } catch (error: any) {
       console.error('Error changing mode:', error);
-      // Optionally, show an error toast to the user
+      toast({
+        title: "Error",
+        description: error.message || "Failed to change mode",
+        variant: "destructive"
+      });
     } finally {
       setChangingModeId(null);
     }
@@ -281,8 +291,8 @@ export default function ChatbotsPage() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="inactive">Inactive</SelectItem>
-                          <SelectItem value="test">Test Mode</SelectItem>
-                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="test">Test Mode (for testers)</SelectItem>
+                          <SelectItem value="active">Active (for all users)</SelectItem>
                         </SelectContent>
                       </Select>
                       {changingModeId === chatbot._id && (
@@ -291,6 +301,9 @@ export default function ChatbotsPage() {
                           Updating...
                         </div>
                       )}
+                      <p className="text-xs text-muted-foreground">
+                        You can have 1 active and 1 test bot per page
+                      </p>
                     </div>
 
                     {actualMode === 'test' && chatbot.testTrigger && (

@@ -308,57 +308,68 @@ async function processMessage(event: any) {
         const messengerAccount = await MessengerAccount.findOne({ accountId: recipientId });
         if (!messengerAccount) return console.log(`No account for page ID: ${recipientId}`);
 
-        const chatbot = await Chatbot.findOne({
+        // Try to find test chatbot first
+        const testChatbot = await Chatbot.findOne({
             accountId: messengerAccount._id,
-            mode: { $in: ['active', 'test'] }
+            mode: 'test'
         });
-        if (!chatbot) return console.log(`No active bot for account: ${messengerAccount.accountName}`);
 
-        // --- FIX: MOVED TEST MODE LOGIC TO THE TOP ---
-        // The test trigger is a special command that must be checked BEFORE any session/flow logic.
-        if (chatbot.mode === 'test') {
-            const isAlreadyTester = chatbot.testers.some((t: any) => t.user_psid === senderId);
+        let chatbot = null;
 
-            // Check if message matches test trigger (case-insensitive)
-            if (messageText && chatbot.testTrigger && messageText.toLowerCase() === chatbot.testTrigger.toLowerCase()) {
-                if (!isAlreadyTester) {
-                    // Add the user to the testers list
-                    chatbot.testers.push({ user_psid: senderId, addedAt: new Date() });
-                    await chatbot.save();
-                    console.log(`SUCCESS: User ${senderId} has been added as a tester.`);
+        // Only check for testers if a test bot exists
+        if (testChatbot) {
+            // Check if message is the test trigger
+            if (messageText && testChatbot.testTrigger && 
+                messageText.toLowerCase() === testChatbot.testTrigger.toLowerCase()) {
+                const isTester = testChatbot.testers.some((t: any) => t.user_psid === senderId);
+                
+                if (!isTester) {
+                    testChatbot.testers.push({ user_psid: senderId, addedAt: new Date() });
+                    await testChatbot.save();
+                    console.log(`User ${senderId} added as tester for bot ${testChatbot._id}`);
                     await sendMessage(senderId, {
-                        text: "✅ You are now an authorized tester! Send any message to begin the chatbot flow."
+                        text: "✅ You are now an authorized tester! Send any message to begin the test chatbot flow."
                     }, messengerAccount.accessToken);
                 } else {
-                    console.log(`User ${senderId} is already a tester.`);
                     await sendMessage(senderId, {
-                        text: "You are already a tester. You can start interacting with the bot."
+                        text: "You are already a tester. You can interact with the test bot."
                     }, messengerAccount.accessToken);
                 }
-                // The trigger's only job is to add the user, so we stop here.
                 return;
             }
 
-            // If it's a normal message, check if the user is an authorized tester before proceeding.
-            if (!isAlreadyTester) {
-                console.log(`Test mode: User ${senderId} not authorized, ignoring message`);
-                return;
+            // Check if user is a tester - use test bot if they are
+            const isTester = testChatbot.testers.some((t: any) => t.user_psid === senderId);
+            if (isTester) {
+                chatbot = testChatbot;
+                console.log(`User ${senderId} is a tester, using test chatbot ${chatbot._id}`);
             }
         }
-        // --- END OF FIX ---
 
-        // Now, proceed with the regular flow logic for active users or authorized testers.
+        // If no test bot or user is not a tester, use active chatbot
+        if (!chatbot) {
+            chatbot = await Chatbot.findOne({
+                accountId: messengerAccount._id,
+                mode: 'active'
+            });
+            
+            if (!chatbot) {
+                console.log(`No active or test chatbot available for account: ${messengerAccount.accountName}`);
+                return;
+            }
+            console.log(`Using active chatbot ${chatbot._id} for user ${senderId}`);
+        }
+
+        // Continue with existing session/flow logic
         let session = await UserSession.findOne({ user_psid: senderId, accountId: messengerAccount._id });
         const chatbotId = chatbot._id;
 
         let currentNodeId;
-        // Check if the user is starting a new conversation or interacting with a different bot
         if (!session || session.chatbotId?.toString() !== chatbotId.toString()) {
             const startNode = chatbot.flow_json.nodes.find((node: any) => node.type === 'input');
             if (!startNode) return console.log("No 'start' node found in flow.");
             currentNodeId = startNode.id;
 
-            // Create or update the session to start from the beginning
             session = await UserSession.findOneAndUpdate(
                 { user_psid: senderId, accountId: messengerAccount._id },
                 { current_node_id: currentNodeId, chatbotId },
@@ -371,20 +382,16 @@ async function processMessage(event: any) {
 
         const currentNode = chatbot.flow_json.nodes.find((n: any) => n.id === currentNodeId);
 
-        // If the user types text while at a quick reply node, we shouldn't proceed.
-        // This prevents the bot from continuing down a default path when it needs a specific button click.
         if (currentNode && currentNode.type === 'quickReplyNode') {
             console.log(`User ${senderId} sent text while at a quick reply node. Waiting for button click.`);
             return;
         }
 
-        // Find the next node from the current one (assuming a single, non-handled exit)
         const nextNode = findNextNode(chatbot.flow_json, currentNodeId);
 
         if (nextNode) {
             let nodeToSend = nextNode;
 
-            // Handle loop node redirection
             if (nextNode.type === 'loopNode') {
                 const targetNodeId = nextNode.data.targetNodeId;
                 if (targetNodeId) {
@@ -411,7 +418,6 @@ async function processMessage(event: any) {
                 return;
             }
 
-            // Auto-continue the flow if the next nodes don't wait for a reply
             await autoContinueFlow(chatbot.flow_json, nodeToSend, senderId, session, messengerAccount.accessToken);
         } else {
             console.log(`End of flow reached for user ${senderId} at node ${currentNodeId}`);
