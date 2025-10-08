@@ -2,8 +2,20 @@
   "Index": {
     "title": "Create AI Chatbots for Messenger & WhatsApp",
     "description": "Our platform allows you to build, train, and deploy powerful AI chatbots for your business without writing a single line of code. Automate conversations, engage customers, and handle support effortlessly.",
-    "getStarted": "Get Started",
-    "login": "Login"
+    "getStarted": "Get Started for Free",
+    "login": "Login",
+    "brandName": "ChatFlow AI",
+    "navFeatures": "Features",
+    "navPricing": "Pricing",
+    "heroTitle": "Build Smarter Chatbots for Messenger & WhatsApp",
+    "heroDescription": "Engage customers, automate support, and generate leads with our intuitive, no-code visual chatbot builder. Powered by AI.",
+    "featuresTitle": "Everything You Need to Succeed",
+    "feature1Title": "Visual Flow Builder",
+    "feature1Desc": "Design complex chatbot conversations with a simple drag-and-drop interface. No coding required.",
+    "feature2Title": "AI Knowledge Agent",
+    "feature2Desc": "Train your chatbot on your own data to answer customer questions accurately and instantly.",
+    "feature3Title": "Multi-Platform Support",
+    "feature3Desc": "Deploy your chatbots seamlessly on both Facebook Messenger and WhatsApp from a single platform."
   },
   "Auth": {
     "loginTitle": "Welcome Back",

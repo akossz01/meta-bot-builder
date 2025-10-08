@@ -1,9 +1,19 @@
 {
     "Index": {
-      "title": "Hozzon létre MI Chatbotokat Messengerre és WhatsAppra",
-      "description": "Platformunk lehetővé teszi, hogy egyetlen sor kód írása nélkül építsen, képezzen és telepítsen hatékony MI chatbotokat vállalkozása számára. Automatizálja a beszélgetéseket, vonja be az ügyfeleket és kezelje a támogatást erőfeszítés nélkül.",
-      "getStarted": "Kezdje el",
-      "login": "Bejelentkezés"
+      "brandName": "ChatFlow AI",
+      "navFeatures": "Funkciók",
+      "navPricing": "Árak",
+      "heroTitle": "Építsen Intelligensebb Chatbotokat Messengerre és WhatsAppra",
+      "heroDescription": "Vonja be ügyfeleit, automatizálja a támogatást és generáljon leadeket intuitív, kód nélküli vizuális chatbot-építőnkkel. MI alapokon.",
+      "getStarted": "Kezdje Ingyen",
+      "login": "Bejelentkezés",
+      "featuresTitle": "Minden, Amire a Sikerhez Szüksége Van",
+      "feature1Title": "Vizuális Folyamatépítő",
+      "feature1Desc": "Tervezzen összetett chatbot-beszélgetéseket egy egyszerű fogd és vidd felülettel. Nincs szükség kódolásra.",
+      "feature2Title": "MI Tudásügynök",
+      "feature2Desc": "Tanítsa be chatbotját saját adataival, hogy pontosan és azonnal válaszoljon az ügyfelek kérdéseire.",
+      "feature3Title": "Többplatformos Támogatás",
+      "feature3Desc": "Telepítse chatbotjait zökkenőmentesen a Facebook Messengerre és a WhatsAppra is egyetlen platformról."
     },
     "Auth": {
       "loginTitle": "Üdvözöljük újra",

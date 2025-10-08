@@ -1,9 +1,19 @@
 {
     "Index": {
-      "title": "Creați Chatboți AI pentru Messenger și WhatsApp",
-      "description": "Platforma noastră vă permite să construiți, să antrenați și să implementați chatboți AI puternici pentru afacerea dvs. fără a scrie o singură linie de cod. Automatizați conversațiile, interacționați cu clienții și gestionați suportul fără efort.",
-      "getStarted": "Începe Acum",
-      "login": "Autentificare"
+      "brandName": "ChatFlow AI",
+      "navFeatures": "Funcționalități",
+      "navPricing": "Prețuri",
+      "heroTitle": "Construiți Chatboți Mai Inteligenți pentru Messenger & WhatsApp",
+      "heroDescription": "Interacționați cu clienții, automatizați suportul și generați lead-uri cu constructorul nostru vizual de chatboți, intuitiv și fără cod. Propulsat de AI.",
+      "getStarted": "Începeți Gratuit",
+      "login": "Autentificare",
+      "featuresTitle": "Tot ce Aveți Nevoie pentru a Reuși",
+      "feature1Title": "Constructor Vizual de Fluxuri",
+      "feature1Desc": "Proiectați conversații complexe pentru chatbot cu o interfață simplă de tip drag-and-drop. Nu este necesară programarea.",
+      "feature2Title": "Agent AI Bazat pe Cunoștințe",
+      "feature2Desc": "Antrenați-vă chatbot-ul pe propriile date pentru a răspunde la întrebările clienților cu precizie și instantaneu.",
+      "feature3Title": "Suport Multi-Platformă",
+      "feature3Desc": "Implementați-vă chatboții fără probleme atât pe Facebook Messenger, cât și pe WhatsApp, de pe o singură platformă."
     },
     "Auth": {
       "loginTitle": "Bine ai revenit",
