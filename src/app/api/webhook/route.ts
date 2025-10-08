@@ -30,9 +30,8 @@ export async function GET(req: NextRequest) {
  * Handles incoming messages and events from Meta.
  */
 export async function POST(req: NextRequest) {
-  // 1. Verify the request signature
   const signature = req.headers.get("x-hub-signature-256") ?? "";
-  const body = await req.text(); // Read raw body for signature verification
+  const body = await req.text();
 
   const expectedSignature = `sha256=${crypto
     .createHmac("sha256", APP_SECRET!)
@@ -46,22 +45,18 @@ export async function POST(req: NextRequest) {
 
   const payload = JSON.parse(body);
 
-  // 2. Process the webhook event
   if (payload.object === "page") {
     for (const entry of payload.entry) {
       for (const event of entry.messaging) {
-        if (event.message && !event.message.is_echo) { // Handle incoming text messages
-          // Asynchronously process the message to respond quickly
+        if (event.message && !event.message.is_echo) {
           processMessage(event);
-        } else if (event.postback) { // Handle quick reply clicks
-          // Asynchronously process the postback
+        } else if (event.postback) {
           processPostback(event);
         }
       }
     }
   }
 
-  // 3. Respond immediately with 200 OK
   return NextResponse.json({ status: "success" }, { status: 200 });
 }
 
@@ -76,7 +71,7 @@ async function processPostback(event: any) {
 
         if (!payload || !payload.startsWith('QUICK_REPLY_PAYLOAD_')) return;
 
-        const replyTitle = payload.replace('QUICK_REPLY_PAYLOAD_', '').replace(/_/g, ' ');
+        const replyTitleFromPayload = payload.replace('QUICK_REPLY_PAYLOAD_', '').replace(/_/g, ' ');
 
         await connectToDatabase();
 
@@ -86,15 +81,18 @@ async function processPostback(event: any) {
         const session = await UserSession.findOne({ user_psid: senderId, accountId: messengerAccount._id });
         if (!session) return; // No active session to continue from
 
-        const chatbot = await Chatbot.findById(session.chatbotId); // Assuming we'll add chatbotId to session
+        const chatbot = await Chatbot.findById(session.chatbotId);
         if (!chatbot) return;
 
         const currentNode = chatbot.flow_json.nodes.find((n: any) => n.id === session.current_node_id);
         if (!currentNode || currentNode.type !== 'quickReplyNode') return;
 
         // Find the index of the clicked reply
-        const replyIndex = currentNode.data.replies.findIndex((r: any) => r.title.toUpperCase() === replyTitle);
-        if (replyIndex === -1) return;
+        const replyIndex = currentNode.data.replies.findIndex((r: any) => r.title.toUpperCase() === replyTitleFromPayload);
+        if (replyIndex === -1) {
+            console.log(`Could not find reply index for title: ${replyTitleFromPayload}`);
+            return;
+        }
 
         const sourceHandleId = `handle-${replyIndex}`;
         
@@ -106,21 +104,21 @@ async function processPostback(event: any) {
             session.current_node_id = nextNode.id;
             await session.save();
         } else {
-            console.log(`End of flow reached for user ${senderId} after quick reply.`);
+            console.log(`End of flow reached for user ${senderId} after quick reply from handle ${sourceHandleId}.`);
         }
-
     } catch(error) {
         console.error("Error processing postback:", error);
     }
 }
 
+
 /**
- * Helper function to find the chatbot's reply and send it.
+ * Processes an incoming message event.
  */
 async function processMessage(event: any) {
   try {
-    const senderId = event.sender.id; // User's Page-Scoped ID (PSID)
-    const recipientId = event.recipient.id; // Your Page's ID
+    const senderId = event.sender.id;
+    const recipientId = event.recipient.id;
 
     await connectToDatabase();
 
@@ -131,41 +129,33 @@ async function processMessage(event: any) {
     if (!chatbot) return console.log(`No active bot for account: ${messengerAccount.accountName}`);
 
     let session = await UserSession.findOne({ user_psid: senderId, accountId: messengerAccount._id });
-    const chatbotId = chatbot._id; // Get the chatbot ID
+    const chatbotId = chatbot._id;
     
     let currentNodeId;
-    if (!session) {
-      // New user session, start from the beginning
+    if (!session || session.chatbotId?.toString() !== chatbotId.toString()) { // If no session or active bot has changed
       const startNode = chatbot.flow_json.nodes.find((node: any) => node.type === 'input');
       if (!startNode) return console.log("No 'start' node found in flow.");
       currentNodeId = startNode.id;
       
-      session = new UserSession({
-          user_psid: senderId,
-          accountId: messengerAccount._id,
-          current_node_id: currentNodeId,
-          chatbotId, // Store the chatbotId in the session
-      });
+      session = await UserSession.findOneAndUpdate(
+          { user_psid: senderId, accountId: messengerAccount._id },
+          { current_node_id: currentNodeId, chatbotId },
+          { new: true, upsert: true }
+      );
     } else {
-      // Existing user, get their current position
       currentNodeId = session.current_node_id;
-      session.chatbotId = chatbotId; // Ensure session is up-to-date with active bot
     }
 
     const currentNode = chatbot.flow_json.nodes.find((n: any) => n.id === currentNodeId);
-    // If user is at a quick reply node and types something, do nothing. They must click a button.
     if (currentNode && currentNode.type === 'quickReplyNode') return;
 
-    // Determine the next step in the flow
     const nextNode = findNextNode(chatbot.flow_json, currentNodeId);
 
     if (nextNode) {
       await sendNodeMessage(senderId, nextNode, messengerAccount.accessToken);
-      // Update the session to the new node
       session.current_node_id = nextNode.id;
       await session.save();
     } else {
-      // End of conversation or dead end
       console.log(`End of flow reached for user ${senderId} at node ${currentNodeId}`);
     }
   } catch (error) {
@@ -174,10 +164,12 @@ async function processMessage(event: any) {
 }
 
 /**
- * Finds the next node in the flow based on the current node ID.
+ * Finds the next node in the flow based on the current node ID and optional handle.
  */
 function findNextNode(flow: any, currentNodeId: string, sourceHandle?: string) {
-    const edge = flow.edges.find((e: any) => e.source === currentNodeId && e.sourceHandle === (sourceHandle || null));
+    const edge = flow.edges.find((e: any) => 
+        e.source === currentNodeId && (sourceHandle ? e.sourceHandle === sourceHandle : !e.sourceHandle)
+    );
     if (!edge) return null;
     return flow.nodes.find((n: any) => n.id === edge.target);
 }

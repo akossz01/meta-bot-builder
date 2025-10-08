@@ -11,7 +11,7 @@ type QuickReplyData = {
   onChange: (data: Partial<QuickReplyData>) => void;
 };
 
-export function QuickReplyNode({ data }: NodeProps<QuickReplyData>) {
+export function QuickReplyNode({ data, id }: NodeProps<QuickReplyData>) {
   const { message, replies, onChange } = data;
 
   const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -25,18 +25,25 @@ export function QuickReplyNode({ data }: NodeProps<QuickReplyData>) {
   };
 
   const addReply = () => {
-    const newReplies = [...replies, { title: '' }];
-    onChange({ replies: newReplies });
+    if (replies.length < 6) {
+        const newReplies = [...replies, { title: '' }];
+        onChange({ replies: newReplies });
+    }
   };
 
   const removeReply = (index: number) => {
     const newReplies = replies.filter((_, i) => i !== index);
     onChange({ replies: newReplies });
   };
+  
+  // Base offset to position the first handle below the main content
+  const handleBaseTop = 130; 
+  // Vertical space between each handle
+  const handleSpacing = 48;
 
   return (
-    <div className="p-4 border-2 bg-background rounded-lg shadow-md w-72">
-      <Handle type="target" position={Position.Top} className="w-2 h-2" />
+    <div className="p-4 border-2 bg-background rounded-lg shadow-md w-72 relative">
+      <Handle type="target" position={Position.Top} className="w-3 h-3 !bg-primary" />
       <div className="flex flex-col gap-3">
         <label className="text-xs font-semibold text-muted-foreground">Question / Message</label>
         <Textarea
@@ -58,6 +65,7 @@ export function QuickReplyNode({ data }: NodeProps<QuickReplyData>) {
                   onChange={(e) => handleReplyChange(index, e.target.value)}
                   className="nodrag"
                   placeholder={`Reply #${index + 1}`}
+                  maxLength={20} // Facebook quick replies have a 20-char limit
                 />
                 <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => removeReply(index)}>
                   <X className="h-4 w-4" />
@@ -71,19 +79,23 @@ export function QuickReplyNode({ data }: NodeProps<QuickReplyData>) {
           </Button>
         </div>
       </div>
+
       {/* Render a source handle for each reply option */}
       {replies.map((reply, index) => (
-        <div key={index} className="relative">
-          <Handle 
-            type="source" 
-            position={Position.Right} 
-            id={`handle-${index}`}
-            style={{ top: `${150 + index * 48}px` }} 
-            className="w-3 h-3"
-          />
-          <div className="text-xs text-muted-foreground absolute" style={{ top: `${142 + index * 48}px`, right: '-65px' }}>
-            {reply.title || `Option ${index + 1}`}
-          </div>
+        <div key={`handle-container-${index}`}>
+            <div 
+                className="absolute text-xs text-muted-foreground" 
+                style={{ top: `${handleBaseTop + index * handleSpacing - 8}px`, right: '1.75rem' }}
+            >
+                {reply.title.substring(0, 15) || `Option ${index + 1}`}
+            </div>
+            <Handle 
+                type="source" 
+                position={Position.Right} 
+                id={`handle-${index}`}
+                style={{ top: `${handleBaseTop + index * handleSpacing}px` }} 
+                className="w-3 h-3 !bg-primary"
+            />
         </div>
       ))}
     </div>

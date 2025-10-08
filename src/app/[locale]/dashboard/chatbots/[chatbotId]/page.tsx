@@ -25,15 +25,15 @@ import { FlowBuilderSidebar } from "@/components/dashboard/FlowBuilderSidebar";
 import { QuickReplyNode } from '@/components/dashboard/nodes/QuickReplyNode';
 
 // Custom Node for displaying and editing a message
-function MessageNode({ data }: NodeProps<{ message: string; onChange: (message: string) => void }>) {
+function MessageNode({ data }: NodeProps<{ message: string; onChange: (data: { message: string }) => void }>) {
   return (
     <div className="p-4 border-2 bg-background rounded-lg shadow-md w-64">
       <Handle type="target" position={Position.Top} className="w-2 h-2" />
       <div className="flex flex-col gap-2">
         <label className="text-xs font-semibold text-muted-foreground">Reply Message</label>
         <Textarea
-          value={data.message}
-          onChange={(e) => data.onChange(e.target.value)}
+          value={data.message || ''}
+          onChange={(e) => data.onChange({ message: e.target.value })}
           className="nodrag" // Prevents dragging the node when interacting with the textarea
         />
       </div>
@@ -61,13 +61,12 @@ export default function ChatbotBuilderPage() {
     quickReplyNode: QuickReplyNode,
   }), []);
 
-  // Generic handler for updating any data field within a node
-  const updateNodeData = useCallback((nodeId: string, newData: object) => {
+  // Specific handler for updating node data
+  const updateNodeData = useCallback((nodeId: string, newData: Partial<{ message: string; replies: any[] }>) => {
     setNodes((nds) =>
       nds.map((node) => {
         if (node.id === nodeId) {
-          // Merging new data with existing data
-          return { ...node, data: { ...node.data, ...newData} };
+          return { ...node, data: { ...node.data, ...newData } };
         }
         return node;
       })
@@ -127,15 +126,22 @@ export default function ChatbotBuilderPage() {
   const handleSaveFlow = async () => {
     setIsSaving(true);
     try {
-        // Strip any functions from node data before saving
+        // Strip functions AND any non-standard properties from node data before saving
         const cleanedNodes = nodes.map(node => {
-            const cleanedData: { [key: string]: any } = {};
-            for (const key in node.data) {
-                if (typeof node.data[key] !== 'function') {
-                    cleanedData[key] = node.data[key];
-                }
+            let cleanedData: any;
+            
+            if (node.type === 'messageNode') {
+                cleanedData = { message: node.data.message };
+            } else if (node.type === 'quickReplyNode') {
+                cleanedData = { message: node.data.message, replies: node.data.replies };
+            } else {
+                // For other nodes like 'input'
+                cleanedData = { label: node.data.label };
             }
-            return { ...node, data: cleanedData };
+
+            // Create a new node object, keeping only essential properties
+            const { id, type, position, width, height } = node;
+            return { id, type, position, width, height, data: cleanedData };
         });
 
         const flowToSave = {
@@ -191,10 +197,10 @@ export default function ChatbotBuilderPage() {
         };
       } else { // Default to messageNode
         newNode = {
-        id: newNodeId,
-        type,
-        position,
-          data: { message: `New message`, onChange: (data: object) => updateNodeData(newNodeId, data) },
+          id: newNodeId,
+          type,
+          position,
+          data: { message: `New message ${newNodeId}`, onChange: (data: object) => updateNodeData(newNodeId, data) },
         };
       }
 
@@ -230,6 +236,7 @@ export default function ChatbotBuilderPage() {
             onDrop={onDrop}
             onDragOver={onDragOver}
             fitView
+            deleteKeyCode={['Backspace', 'Delete']}
           >
             <Controls />
             <Background />

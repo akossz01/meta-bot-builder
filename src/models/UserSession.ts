@@ -4,6 +4,7 @@ export interface IUserSession extends Document {
   user_psid: string; // Page-Scoped ID for Messenger user
   accountId: Types.ObjectId; // Link to the MessengerAccount (_id)
   current_node_id: string; // The ID of the last node sent to the user
+  chatbotId: Types.ObjectId; // Link to the active Chatbot
   chat_state: object; // For storing variables, context, etc. (optional for now)
 }
 
@@ -20,6 +21,11 @@ const UserSessionSchema: Schema = new Schema(
     },
     current_node_id: {
       type: String,
+      required: true,
+    },
+    chatbotId: {
+      type: Schema.Types.ObjectId,
+      ref: "Chatbot",
       required: true,
     },
     chat_state: {
