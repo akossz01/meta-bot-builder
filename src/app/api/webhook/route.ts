@@ -162,12 +162,12 @@ async function processPostback(event: any) {
         if (payload.startsWith('CARD_BUTTON_')) {
             const buttonIndex = parseInt(payload.replace('CARD_BUTTON_', ''));
             
-            // Find the card node in the flow
+            // Find the card node in the flow (not necessarily the current node)
             let cardNode = null;
             if (currentNode?.type === 'cardNode') {
                 cardNode = currentNode;
             } else {
-                // Look for any card node in the flow
+                // Look for any card node in the flow that has this button
                 cardNode = chatbot.flow_json.nodes.find((n: any) => {
                     if (n.type !== 'cardNode') return false;
                     return n.data.buttons[buttonIndex]?.type === 'postback';
@@ -180,7 +180,7 @@ async function processPostback(event: any) {
             }
 
             const sourceHandleId = `button-${buttonIndex}`;
-            console.log(`Card button ${buttonIndex} clicked, looking for handle: ${sourceHandleId}`);
+            console.log(`Card button ${buttonIndex} clicked from card node ${cardNode.id}`);
 
             let nextNode = findNextNode(chatbot.flow_json, cardNode.id, sourceHandleId);
 
@@ -454,16 +454,47 @@ async function processMessage(event: any) {
 
         const currentNode = chatbot.flow_json.nodes.find((n: any) => n.id === currentNodeId);
 
+        // If user is at a quick reply node, ignore text messages
         if (currentNode && currentNode.type === 'quickReplyNode') {
             console.log(`User ${senderId} sent text while at a quick reply node. Waiting for button click.`);
             return;
         }
 
+        // If user is at a loop node, they shouldn't be sending messages here
+        // Loop nodes redirect automatically, so if they're "stuck" at a loop node,
+        // we should process it and redirect them
+        if (currentNode && currentNode.type === 'loopNode') {
+            console.log(`User ${senderId} is at loop node ${currentNodeId}, redirecting to target`);
+            const targetNodeId = currentNode.data.targetNodeId;
+            if (targetNodeId) {
+                const targetNode = chatbot.flow_json.nodes.find((n: any) => n.id === targetNodeId);
+                if (targetNode) {
+                    console.log(`Loop node redirecting to node ${targetNodeId}`);
+                    await sendNodeMessage(senderId, targetNode, messengerAccount.accessToken);
+                    session.current_node_id = targetNodeId;
+                    await session.save();
+                    
+                    if (targetNode.type !== 'endNode') {
+                        await autoContinueFlow(chatbot.flow_json, targetNode, senderId, session, messengerAccount.accessToken);
+                    }
+                    return;
+                } else {
+                    console.log(`Loop target node ${targetNodeId} not found`);
+                    return;
+                }
+            } else {
+                console.log(`Loop node has no target configured`);
+                return;
+            }
+        }
+
+        // Find the next node normally
         const nextNode = findNextNode(chatbot.flow_json, currentNodeId);
 
         if (nextNode) {
             let nodeToSend = nextNode;
 
+            // Handle if the next node is a loop node
             if (nextNode.type === 'loopNode') {
                 const targetNodeId = nextNode.data.targetNodeId;
                 if (targetNodeId) {
