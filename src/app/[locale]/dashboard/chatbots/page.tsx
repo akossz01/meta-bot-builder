@@ -134,10 +134,23 @@ export default function ChatbotsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mode }),
       });
-      if (!response.ok) throw new Error('Failed to change mode');
-      fetchChatbots();
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to change mode');
+      }
+
+      const updatedChatbot = await response.json();
+      
+      // Update the state directly instead of re-fetching the whole list
+      setChatbots(currentChatbots =>
+        currentChatbots.map(bot =>
+          bot._id === chatbotId ? { ...bot, mode: updatedChatbot.mode } : bot
+        )
+      );
+      
     } catch (error) {
       console.error('Error changing mode:', error);
+      // Optionally, show an error toast to the user
     } finally {
       setChangingModeId(null);
     }

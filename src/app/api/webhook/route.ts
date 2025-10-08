@@ -310,37 +310,47 @@ async function processMessage(event: any) {
 
     const chatbot = await Chatbot.findOne({ 
       accountId: messengerAccount._id, 
-      mode: { $in: ['active', 'test'] }  // Changed from isActive: true
+      mode: { $in: ['active', 'test'] }
     });
     if (!chatbot) return console.log(`No active bot for account: ${messengerAccount.accountName}`);
 
     // Handle test mode
     if (chatbot.mode === 'test') {
-      const isTester = chatbot.testers.some((t: any) => t.user_psid === senderId);
+      const isAlreadyTester = chatbot.testers.some((t: any) => t.user_psid === senderId);
       
-      // Check if message matches test trigger
-      if (messageText === chatbot.testTrigger) {
-        // Add user as tester if not already
-        if (!isTester) {
+      // Check if message matches test trigger (case-insensitive, trimmed)
+      if (messageText && chatbot.testTrigger && messageText.toLowerCase() === chatbot.testTrigger.toLowerCase()) {
+        if (!isAlreadyTester) {
+          // Add the user to the testers list
           await Chatbot.findByIdAndUpdate(chatbot._id, {
             $push: { testers: { user_psid: senderId, addedAt: new Date() } }
           });
-          console.log(`Added tester: ${senderId} for chatbot ${chatbot._id}`);
+          console.log(`SUCCESS: User ${senderId} has been added as a tester.`);
+          await sendMessage(senderId, { 
+            text: "✅ You are now an authorized tester! Send any message to begin the chatbot flow." 
+          }, messengerAccount.accessToken);
+        } else {
+          console.log(`User ${senderId} is already a tester.`);
+          await sendMessage(senderId, { 
+            text: "You are already a tester. You can start interacting with the bot." 
+          }, messengerAccount.accessToken);
         }
-        // Start the flow for the tester
-      } else if (!isTester) {
-        // Not a tester and didn't send the trigger - ignore
+        // The trigger's only job is to add the user, so we stop here
+        return;
+      }
+
+      // If it's a normal message, check if the user is an authorized tester
+      if (!isAlreadyTester) {
         console.log(`Test mode: User ${senderId} not authorized, ignoring message`);
         return;
       }
-      // If already a tester, continue with normal flow
     }
 
     let session = await UserSession.findOne({ user_psid: senderId, accountId: messengerAccount._id });
     const chatbotId = chatbot._id;
     
     let currentNodeId;
-    if (!session || session.chatbotId?.toString() !== chatbotId.toString()) { // If no session or active bot has changed
+    if (!session || session.chatbotId?.toString() !== chatbotId.toString()) {
       const startNode = chatbot.flow_json.nodes.find((node: any) => node.type === 'input');
       if (!startNode) return console.log("No 'start' node found in flow.");
       currentNodeId = startNode.id;
@@ -350,6 +360,7 @@ async function processMessage(event: any) {
           { current_node_id: currentNodeId, chatbotId },
           { new: true, upsert: true }
       );
+      console.log(`Created/updated session for user ${senderId}, starting at node ${currentNodeId}`);
     } else {
       currentNodeId = session.current_node_id;
     }
