@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 
 export function Sidebar() {
   const t = useTranslations("Dashboard");
+  const tIndex = useTranslations("Index");
   const pathname = usePathname();
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -49,7 +50,7 @@ export function Sidebar() {
       <div className="flex h-16 items-center border-b px-6">
         <Link href="/" className="flex items-center gap-2 font-bold">
           <img src="/favicon.ico" alt="Logo" className="h-6 w-6" />
-          <span>{t('brandName', {ns: 'Index'})}</span>
+          <span>{tIndex('brandName')}</span>
         </Link>
       </div>
       <div className="flex-1 overflow-y-auto">
