@@ -64,5 +64,94 @@
       "title": "MI Chatbot Építő Messengerre és WhatsAppra",
       "description": "Építsen kód nélküli MI chatbotokat a Facebook Messengeren és WhatsAppon folytatott beszélgetések automatizálásához. Vonja be az ügyfeleket, kezelje a támogatást és generáljon leadeket.",
       "keywords": "chatbot, mi, messenger, whatsapp, saas, automatizálás, kód nélkül"
+    },
+    "Chatbots": {
+      "title": "Chatbotjaid",
+      "description": "Hozd létre és kezeld az automatizált beszélgetési folyamatokat.",
+      "createButton": "Chatbot Létrehozása",
+      "createDialog": {
+        "title": "Új Chatbot Létrehozása",
+        "description": "Válassz nevet és csatlakoztatott oldalt az új botodhoz.",
+        "nameLabel": "Chatbot Neve",
+        "namePlaceholder": "pl., Ügyfélszolgálati Bot",
+        "pageLabel": "Facebook Oldal",
+        "pagePlaceholder": "Válassz egy oldalt...",
+        "noPages": "Nincs csatlakoztatott oldal",
+        "cancelButton": "Mégse",
+        "createButton": "Létrehozás"
+      },
+      "noChatbots": {
+        "title": "Még nincsenek chatbotok",
+        "description": "Kezdd el az első chatbotod létrehozásával."
+      },
+      "loading": "Chatbotok betöltése...",
+      "editFlow": "Folyamat Szerkesztése",
+      "modeLabel": "Mód",
+      "modeInactive": "Inaktív",
+      "modeTest": "Teszt Mód (tesztelőknek)",
+      "modeActive": "Aktív (minden felhasználónak)",
+      "modeDescription": "Oldalanként 1 aktív és 1 teszt botod lehet",
+      "testTriggerLabel": "Teszt Trigger:",
+      "settingsButton": "Beállítások",
+      "deleteButton": "Törlés",
+      "deleting": "Törlés...",
+      "deleteDialog": {
+        "title": "Biztos vagy benne?",
+        "description": "Ez véglegesen törli a(z) \"{name}\" chatbotot és minden folyamatadatát. Ez a művelet nem vonható vissza.",
+        "cancel": "Mégse",
+        "confirm": "Törlés"
+      },
+      "badges": {
+        "active": "Aktív",
+        "test": "Teszt"
+      }
+    },
+    "ChatbotSettings": {
+      "backButton": "Vissza a Chatbotokhoz",
+      "title": "{name}",
+      "description": "Chatbot beállítások és teszt mód kezelése",
+      "currentStatus": {
+        "title": "Jelenlegi Állapot",
+        "description": "Tekintsd meg ennek a chatbotnak a jelenlegi módját",
+        "modeLabel": "Mód:",
+        "active": "Aktív",
+        "test": "Teszt Mód",
+        "inactive": "Inaktív"
+      },
+      "testTrigger": {
+        "title": "Teszt Trigger Kód",
+        "description": "Oszd meg ezt a kódot a tesztelőkkel. Nekik pontosan ezt az üzenetet kell küldeniük a teszt mód aktiválásához.",
+        "regenerateButton": "Trigger Újragenerálása",
+        "regenerating": "Újragenerálás...",
+        "regenerateDialog": {
+          "title": "Újragenerálod a Teszt Triggert?",
+          "description": "Ez új teszt trigger kódot generál és eltávolítja az összes jelenlegi tesztelőt. Nekik az új kódot kell használniuk, hogy újra tesztelők lehessenek.",
+          "cancel": "Mégse",
+          "confirm": "Újragenerálás"
+        }
+      },
+      "testers": {
+        "title": "Engedélyezett Tesztelők",
+        "description": "Felhasználók, akik elküldték a teszt triggert és interakcióba léphetnek a teszt bottal",
+        "noTesters": "Még nincsenek tesztelők",
+        "shareMessage": "Oszd meg a teszt trigger kódot tesztelők hozzáadásához",
+        "addedAt": "Hozzáadva {date}",
+        "removeDialog": {
+          "title": "Eltávolítod a Tesztelőt?",
+          "description": "{name} többé nem fog hozzáférni a teszt bothoz. Újra hozzáférést szerezhet a teszt trigger újbóli elküldésével.",
+          "descriptionUnknown": "Ez a felhasználó többé nem fog hozzáférni a teszt bothoz. Újra hozzáférést szerezhet a teszt trigger újbóli elküldésével.",
+          "cancel": "Mégse",
+          "confirm": "Eltávolítás"
+        }
+      },
+      "testModeDisabled": {
+        "title": "Teszt Mód",
+        "description": "Aktiváld a teszt módot, hogy kipróbáld a chatbotot meghatározott tesztelőkkel, mielőtt élőben indítod",
+        "message": "Válts teszt módra a chatbotok oldalról a tesztelők kezelésének engedélyezéséhez"
+      }
+    },
+    "ChatbotBuilder": {
+      "saveButton": "Folyamat Mentése",
+      "saving": "Mentés..."
     }
   }

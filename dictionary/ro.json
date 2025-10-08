@@ -64,5 +64,94 @@
       "title": "Constructor de Chatboți AI pentru Messenger & WhatsApp",
       "description": "Construiți chatboți AI fără cod pentru a automatiza conversațiile pe Facebook Messenger și WhatsApp. Interacționați cu clienții, gestionați suportul și generați lead-uri.",
       "keywords": "chatbot, ai, messenger, whatsapp, saas, automatizare, fără cod"
+    },
+    "Chatbots": {
+      "title": "Chatboții Tăi",
+      "description": "Creați și gestionați fluxurile de conversație automate.",
+      "createButton": "Creează Chatbot",
+      "createDialog": {
+        "title": "Creează un Chatbot Nou",
+        "description": "Alege un nume și o pagină conectată pentru noul tău bot.",
+        "nameLabel": "Nume Chatbot",
+        "namePlaceholder": "ex., Bot Suport Clienți",
+        "pageLabel": "Pagină Facebook",
+        "pagePlaceholder": "Selectează o pagină...",
+        "noPages": "Nicio pagină conectată",
+        "cancelButton": "Anulează",
+        "createButton": "Creează"
+      },
+      "noChatbots": {
+        "title": "Încă nu ai chatboți",
+        "description": "Începe prin a crea primul tău chatbot."
+      },
+      "loading": "Se încarcă chatboții...",
+      "editFlow": "Editează Fluxul",
+      "modeLabel": "Mod",
+      "modeInactive": "Inactiv",
+      "modeTest": "Mod Test (pentru testatori)",
+      "modeActive": "Activ (pentru toți utilizatorii)",
+      "modeDescription": "Poți avea 1 bot activ și 1 bot de test pe pagină",
+      "testTriggerLabel": "Declanșator Test:",
+      "settingsButton": "Setări",
+      "deleteButton": "Șterge",
+      "deleting": "Se șterge...",
+      "deleteDialog": {
+        "title": "Ești sigur?",
+        "description": "Aceasta va șterge permanent chatbot-ul \"{name}\" și toate datele sale. Această acțiune nu poate fi anulată.",
+        "cancel": "Anulează",
+        "confirm": "Șterge"
+      },
+      "badges": {
+        "active": "Activ",
+        "test": "Test"
+      }
+    },
+    "ChatbotSettings": {
+      "backButton": "Înapoi la Chatboți",
+      "title": "{name}",
+      "description": "Gestionează setările chatbot-ului și modul de test",
+      "currentStatus": {
+        "title": "Stare Curentă",
+        "description": "Vezi modul curent al acestui chatbot",
+        "modeLabel": "Mod:",
+        "active": "Activ",
+        "test": "Mod Test",
+        "inactive": "Inactiv"
+      },
+      "testTrigger": {
+        "title": "Cod Declanșator Test",
+        "description": "Distribuie acest cod cu testatorii. Ei trebuie să trimită acest mesaj exact pentru a activa modul de test.",
+        "regenerateButton": "Regenerează Declanșatorul",
+        "regenerating": "Se regenerează...",
+        "regenerateDialog": {
+          "title": "Regenerezi Declanșatorul de Test?",
+          "description": "Aceasta va genera un nou cod de declanșare și va elimina toți testatorii actuali. Aceștia vor trebui să folosească noul cod pentru a deveni din nou testatori.",
+          "cancel": "Anulează",
+          "confirm": "Regenerează"
+        }
+      },
+      "testers": {
+        "title": "Testatori Autorizați",
+        "description": "Utilizatori care au trimis declanșatorul de test și pot interacționa cu bot-ul de test",
+        "noTesters": "Încă nu există testatori",
+        "shareMessage": "Distribuie codul de declanșare pentru a adăuga testatori",
+        "addedAt": "Adăugat {date}",
+        "removeDialog": {
+          "title": "Elimini Testatorul?",
+          "description": "{name} nu va mai avea acces la bot-ul de test. Poate redobândi accesul trimițând din nou declanșatorul de test.",
+          "descriptionUnknown": "Acest utilizator nu va mai avea acces la bot-ul de test. Poate redobândi accesul trimițând din nou declanșatorul de test.",
+          "cancel": "Anulează",
+          "confirm": "Elimină"
+        }
+      },
+      "testModeDisabled": {
+        "title": "Mod Test",
+        "description": "Activează modul de test pentru a încerca chatbot-ul tău cu testatori specifici înainte de a-l lansa",
+        "message": "Comută la modul de test din pagina chatboților pentru a activa gestionarea testatorilor"
+      }
+    },
+    "ChatbotBuilder": {
+      "saveButton": "Salvează Fluxul",
+      "saving": "Se salvează..."
     }
   }

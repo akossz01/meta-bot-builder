@@ -36,6 +36,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslations } from "next-intl";
 
 // Types
 type ConnectedAccount = { _id: string; accountId: string; accountName: string; };
@@ -54,6 +55,7 @@ type Chatbot = {
 
 export default function ChatbotsPage() {
   const router = useRouter();
+  const t = useTranslations("Chatbots");
   const [chatbots, setChatbots] = useState<Chatbot[]>([]);
   const [accounts, setAccounts] = useState<ConnectedAccount[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -170,48 +172,48 @@ export default function ChatbotsPage() {
     <div className="container mx-auto py-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Your Chatbots</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
           <p className="text-muted-foreground mt-2">
-            Create and manage your automated conversation flows.
+            {t("description")}
           </p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <PlusCircle className="mr-2 h-4 w-4" />
-              Create Chatbot
+              {t("createButton")}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create a New Chatbot</DialogTitle>
+              <DialogTitle>{t("createDialog.title")}</DialogTitle>
               <DialogDescription>
-                Choose a name and a connected page for your new bot.
+                {t("createDialog.description")}
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
-                    <Label htmlFor="name">Chatbot Name</Label>
-                    <Input id="name" value={newBotName} onChange={(e) => setNewBotName(e.target.value)} placeholder="e.g., Customer Support Bot" />
+                    <Label htmlFor="name">{t("createDialog.nameLabel")}</Label>
+                    <Input id="name" value={newBotName} onChange={(e) => setNewBotName(e.target.value)} placeholder={t("createDialog.namePlaceholder")} />
                 </div>
                 <div className="grid gap-2">
-                    <Label htmlFor="account">Facebook Page</Label>
+                    <Label htmlFor="account">{t("createDialog.pageLabel")}</Label>
                     <Select value={selectedAccount} onValueChange={setSelectedAccount}>
                         <SelectTrigger>
-                            <SelectValue placeholder="Select a page..." />
+                            <SelectValue placeholder={t("createDialog.pagePlaceholder")} />
                         </SelectTrigger>
                         <SelectContent>
                             {accounts.length > 0 ? accounts.map(acc => (
                                 <SelectItem key={acc._id} value={acc._id}>{acc.accountName}</SelectItem>
-                            )) : <SelectItem value="no-accounts" disabled>No pages connected</SelectItem>}
+                            )) : <SelectItem value="no-accounts" disabled>{t("createDialog.noPages")}</SelectItem>}
                         </SelectContent>
                     </Select>
                 </div>
                 {error && <p className="text-sm text-destructive">{error}</p>}
             </div>
             <DialogFooter>
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-                <Button onClick={handleCreateChatbot}>Create</Button>
+                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>{t("createDialog.cancelButton")}</Button>
+                <Button onClick={handleCreateChatbot}>{t("createDialog.createButton")}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -220,13 +222,13 @@ export default function ChatbotsPage() {
       {isLoading ? (
         <div className="flex items-center gap-2 text-muted-foreground">
           <Loader2 className="h-5 w-5 animate-spin" />
-          <span>Loading chatbots...</span>
+          <span>{t("loading")}</span>
         </div>
       ) : chatbots.length === 0 ? (
         <div className="text-center py-12 border-2 border-dashed rounded-lg">
             <MessageSquare className="mx-auto h-12 w-12 text-muted-foreground" />
-            <h3 className="mt-4 text-lg font-semibold">No chatbots yet</h3>
-            <p className="mt-2 text-sm text-muted-foreground">Get started by creating your first chatbot.</p>
+            <h3 className="mt-4 text-lg font-semibold">{t("noChatbots.title")}</h3>
+            <p className="mt-2 text-sm text-muted-foreground">{t("noChatbots.description")}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -253,12 +255,12 @@ export default function ChatbotsPage() {
                       <CardTitle className="flex items-center gap-2 flex-wrap">
                         <span className="truncate">{chatbot.name}</span>
                         {actualMode === 'active' && (
-                          <Badge variant="default">Active</Badge>
+                          <Badge variant="default">{t("badges.active")}</Badge>
                         )}
                         {actualMode === 'test' && (
                           <Badge variant="secondary" className="gap-1">
                             <FlaskConical className="h-3 w-3" />
-                            Test
+                            {t("badges.test")}
                           </Badge>
                         )}
                       </CardTitle>
@@ -276,11 +278,11 @@ export default function ChatbotsPage() {
                       onClick={() => router.push(`/dashboard/chatbots/${chatbot._id}`)}
                     >
                       <Edit className="mr-2 h-4 w-4" />
-                      Edit Flow
+                      {t("editFlow")}
                     </Button>
 
                     <div className="flex flex-col gap-2 p-2 border rounded-lg">
-                      <Label className="text-xs font-semibold">Mode</Label>
+                      <Label className="text-xs font-semibold">{t("modeLabel")}</Label>
                       <Select
                         value={actualMode}
                         onValueChange={(value: 'active' | 'test' | 'inactive') => handleModeChange(chatbot._id, value)}
@@ -290,25 +292,25 @@ export default function ChatbotsPage() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="inactive">Inactive</SelectItem>
-                          <SelectItem value="test">Test Mode (for testers)</SelectItem>
-                          <SelectItem value="active">Active (for all users)</SelectItem>
+                          <SelectItem value="inactive">{t("modeInactive")}</SelectItem>
+                          <SelectItem value="test">{t("modeTest")}</SelectItem>
+                          <SelectItem value="active">{t("modeActive")}</SelectItem>
                         </SelectContent>
                       </Select>
                       {changingModeId === chatbot._id && (
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <Loader2 className="h-3 w-3 animate-spin" />
-                          Updating...
+                          {t("deleting")}
                         </div>
                       )}
                       <p className="text-xs text-muted-foreground">
-                        You can have 1 active and 1 test bot per page
+                        {t("modeDescription")}
                       </p>
                     </div>
 
                     {actualMode === 'test' && chatbot.testTrigger && (
                       <div className="p-2 bg-muted rounded text-xs">
-                        <p className="font-semibold mb-1">Test Trigger:</p>
+                        <p className="font-semibold mb-1">{t("testTriggerLabel")}</p>
                         <code className="bg-background px-2 py-1 rounded">{chatbot.testTrigger}</code>
                       </div>
                     )}
@@ -319,7 +321,7 @@ export default function ChatbotsPage() {
                       onClick={() => router.push(`/dashboard/chatbots/${chatbot._id}/settings`)}
                     >
                       <Settings className="mr-2 h-4 w-4" />
-                      Settings
+                      {t("settingsButton")}
                     </Button>
 
                     <AlertDialog>
@@ -332,30 +334,30 @@ export default function ChatbotsPage() {
                           {deletingId === chatbot._id ? (
                             <>
                               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Deleting...
+                              {t("deleting")}
                             </>
                           ) : (
                             <>
                               <Trash2 className="mr-2 h-4 w-4" />
-                              Delete
+                              {t("deleteButton")}
                             </>
                           )}
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                          <AlertDialogTitle>{t("deleteDialog.title")}</AlertDialogTitle>
                           <AlertDialogDescription>
-                            This will permanently delete the chatbot "{chatbot.name}" and all its flow data. This action cannot be undone.
+                            {t("deleteDialog.description", { name: chatbot.name })}
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogCancel>{t("deleteDialog.cancel")}</AlertDialogCancel>
                           <AlertDialogAction
                             onClick={() => handleDelete(chatbot._id)}
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                           >
-                            Delete
+                            {t("deleteDialog.confirm")}
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>

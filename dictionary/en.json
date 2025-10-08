@@ -64,5 +64,94 @@
     "title": "AI Chatbot Builder for Messenger & WhatsApp",
     "description": "Build no-code AI chatbots to automate conversations on Facebook Messenger and WhatsApp. Engage customers, handle support, and generate leads.",
     "keywords": "chatbot, ai, messenger, whatsapp, saas, automation, no-code"
+  },
+  "Chatbots": {
+    "title": "Your Chatbots",
+    "description": "Create and manage your automated conversation flows.",
+    "createButton": "Create Chatbot",
+    "createDialog": {
+      "title": "Create a New Chatbot",
+      "description": "Choose a name and a connected page for your new bot.",
+      "nameLabel": "Chatbot Name",
+      "namePlaceholder": "e.g., Customer Support Bot",
+      "pageLabel": "Facebook Page",
+      "pagePlaceholder": "Select a page...",
+      "noPages": "No pages connected",
+      "cancelButton": "Cancel",
+      "createButton": "Create"
+    },
+    "noChatbots": {
+      "title": "No chatbots yet",
+      "description": "Get started by creating your first chatbot."
+    },
+    "loading": "Loading chatbots...",
+    "editFlow": "Edit Flow",
+    "modeLabel": "Mode",
+    "modeInactive": "Inactive",
+    "modeTest": "Test Mode (for testers)",
+    "modeActive": "Active (for all users)",
+    "modeDescription": "You can have 1 active and 1 test bot per page",
+    "testTriggerLabel": "Test Trigger:",
+    "settingsButton": "Settings",
+    "deleteButton": "Delete",
+    "deleting": "Deleting...",
+    "deleteDialog": {
+      "title": "Are you sure?",
+      "description": "This will permanently delete the chatbot \"{name}\" and all its flow data. This action cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Delete"
+    },
+    "badges": {
+      "active": "Active",
+      "test": "Test"
+    }
+  },
+  "ChatbotSettings": {
+    "backButton": "Back to Chatbots",
+    "title": "{name}",
+    "description": "Manage chatbot settings and test mode",
+    "currentStatus": {
+      "title": "Current Status",
+      "description": "View the current mode of this chatbot",
+      "modeLabel": "Mode:",
+      "active": "Active",
+      "test": "Test Mode",
+      "inactive": "Inactive"
+    },
+    "testTrigger": {
+      "title": "Test Trigger Code",
+      "description": "Share this code with testers. They must send this exact message to activate test mode.",
+      "regenerateButton": "Regenerate Trigger",
+      "regenerating": "Regenerating...",
+      "regenerateDialog": {
+        "title": "Regenerate Test Trigger?",
+        "description": "This will generate a new test trigger code and remove all current testers. They will need to use the new code to become testers again.",
+        "cancel": "Cancel",
+        "confirm": "Regenerate"
+      }
+    },
+    "testers": {
+      "title": "Authorized Testers",
+      "description": "Users who have sent the test trigger and can interact with the test bot",
+      "noTesters": "No testers yet",
+      "shareMessage": "Share the test trigger code to add testers",
+      "addedAt": "Added {date}",
+      "removeDialog": {
+        "title": "Remove Tester?",
+        "description": "{name} will no longer have access to the test bot. They can re-gain access by sending the test trigger again.",
+        "descriptionUnknown": "This user will no longer have access to the test bot. They can re-gain access by sending the test trigger again.",
+        "cancel": "Cancel",
+        "confirm": "Remove"
+      }
+    },
+    "testModeDisabled": {
+      "title": "Test Mode",
+      "description": "Enable test mode to try out your chatbot with specific testers before going live",
+      "message": "Switch to test mode from the chatbots page to enable tester management"
+    }
+  },
+  "ChatbotBuilder": {
+    "saveButton": "Save Flow",
+    "saving": "Saving..."
   }
 }

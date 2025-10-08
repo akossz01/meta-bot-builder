@@ -18,6 +18,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslations } from "next-intl";
 
 type Tester = {
   user_psid: string;
@@ -38,6 +39,7 @@ export default function ChatbotSettingsPage() {
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
+  const t = useTranslations("ChatbotSettings");
   const chatbotId = params.chatbotId as string;
 
   const [chatbot, setChatbot] = useState<Chatbot | null>(null);
@@ -162,34 +164,34 @@ export default function ChatbotSettingsPage() {
         onClick={() => router.push("/dashboard/chatbots")}
       >
         <ArrowLeft className="mr-2 h-4 w-4" />
-        Back to Chatbots
+        {t("backButton")}
       </Button>
 
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{chatbot.name}</h1>
           <p className="text-muted-foreground mt-2">
-            Manage chatbot settings and test mode
+            {t("description")}
           </p>
         </div>
 
         {/* Mode Status Card */}
         <Card>
           <CardHeader>
-            <CardTitle>Current Status</CardTitle>
-            <CardDescription>View the current mode of this chatbot</CardDescription>
+            <CardTitle>{t("currentStatus.title")}</CardTitle>
+            <CardDescription>{t("currentStatus.description")}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Mode:</span>
+              <span className="text-sm font-medium">{t("currentStatus.modeLabel")}</span>
               {chatbot.mode === 'active' && (
-                <Badge variant="default">Active</Badge>
+                <Badge variant="default">{t("currentStatus.active")}</Badge>
               )}
               {chatbot.mode === 'test' && (
-                <Badge variant="secondary">Test Mode</Badge>
+                <Badge variant="secondary">{t("currentStatus.test")}</Badge>
               )}
               {chatbot.mode === 'inactive' && (
-                <Badge variant="outline">Inactive</Badge>
+                <Badge variant="outline">{t("currentStatus.inactive")}</Badge>
               )}
             </div>
           </CardContent>
@@ -200,9 +202,9 @@ export default function ChatbotSettingsPage() {
           <>
             <Card>
               <CardHeader>
-                <CardTitle>Test Trigger Code</CardTitle>
+                <CardTitle>{t("testTrigger.title")}</CardTitle>
                 <CardDescription>
-                  Share this code with testers. They must send this exact message to activate test mode.
+                  {t("testTrigger.description")}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -229,28 +231,27 @@ export default function ChatbotSettingsPage() {
                       {isRegenerating ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Regenerating...
+                          {t("testTrigger.regenerating")}
                         </>
                       ) : (
                         <>
                           <RefreshCw className="mr-2 h-4 w-4" />
-                          Regenerate Trigger
+                          {t("testTrigger.regenerateButton")}
                         </>
                       )}
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Regenerate Test Trigger?</AlertDialogTitle>
+                      <AlertDialogTitle>{t("testTrigger.regenerateDialog.title")}</AlertDialogTitle>
                       <AlertDialogDescription>
-                        This will generate a new test trigger code and remove all current testers. 
-                        They will need to use the new code to become testers again.
+                        {t("testTrigger.regenerateDialog.description")}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogCancel>{t("testTrigger.regenerateDialog.cancel")}</AlertDialogCancel>
                       <AlertDialogAction onClick={handleRegenerateTrigger}>
-                        Regenerate
+                        {t("testTrigger.regenerateDialog.confirm")}
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
@@ -260,18 +261,18 @@ export default function ChatbotSettingsPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Authorized Testers</CardTitle>
+                <CardTitle>{t("testers.title")}</CardTitle>
                 <CardDescription>
-                  Users who have sent the test trigger and can interact with the test bot
+                  {t("testers.description")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 {chatbot.testers.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <User className="mx-auto h-12 w-12 mb-2 opacity-50" />
-                    <p>No testers yet</p>
+                    <p>{t("testers.noTesters")}</p>
                     <p className="text-sm mt-1">
-                      Share the test trigger code to add testers
+                      {t("testers.shareMessage")}
                     </p>
                   </div>
                 ) : (
@@ -301,7 +302,7 @@ export default function ChatbotSettingsPage() {
                               {tester.user_psid}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              Added {new Date(tester.addedAt).toLocaleString()}
+                              {t("testers.addedAt", { date: new Date(tester.addedAt).toLocaleString() })}
                             </p>
                           </div>
                         </div>
@@ -321,19 +322,20 @@ export default function ChatbotSettingsPage() {
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>Remove Tester?</AlertDialogTitle>
+                              <AlertDialogTitle>{t("testers.removeDialog.title")}</AlertDialogTitle>
                               <AlertDialogDescription>
-                                {tester.name || 'This user'} will no longer have access to the test bot. They can re-gain 
-                                access by sending the test trigger again.
+                                {tester.name 
+                                  ? t("testers.removeDialog.description", { name: tester.name })
+                                  : t("testers.removeDialog.descriptionUnknown")}
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogCancel>{t("testers.removeDialog.cancel")}</AlertDialogCancel>
                               <AlertDialogAction
                                 onClick={() => handleRemoveTester(tester.user_psid)}
                                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                               >
-                                Remove
+                                {t("testers.removeDialog.confirm")}
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
@@ -350,14 +352,14 @@ export default function ChatbotSettingsPage() {
         {chatbot.mode !== 'test' && (
           <Card>
             <CardHeader>
-              <CardTitle>Test Mode</CardTitle>
+              <CardTitle>{t("testModeDisabled.title")}</CardTitle>
               <CardDescription>
-                Enable test mode to try out your chatbot with specific testers before going live
+                {t("testModeDisabled.description")}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Switch to test mode from the chatbots page to enable tester management
+                {t("testModeDisabled.message")}
               </p>
             </CardContent>
           </Card>

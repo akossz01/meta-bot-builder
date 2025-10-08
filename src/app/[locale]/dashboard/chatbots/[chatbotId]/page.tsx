@@ -32,6 +32,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useToast } from "@/hooks/use-toast";
 import { MediaNode } from '@/components/dashboard/nodes/MediaNode';
 import { CarouselNode } from '@/components/dashboard/nodes/CarouselNode';
+import { useTranslations } from "next-intl";
 
 // Color palette for nodes
 const NODE_COLORS = [
@@ -123,6 +124,7 @@ export default function ChatbotBuilderPage() {
   const chatbotId = params.chatbotId as string;
   const router = useRouter();
   const { toast } = useToast();
+  const t = useTranslations("ChatbotBuilder");
 
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
@@ -506,8 +508,17 @@ export default function ChatbotBuilderPage() {
         <div className="flex justify-between items-center p-4 border-b">
           <h1 className="text-2xl font-bold">{chatbotName}</h1>
           <Button onClick={handleSaveFlow} disabled={isSaving}>
-            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-            Save Flow
+            {isSaving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {t("saving")}
+              </>
+            ) : (
+              <>
+                <Save className="mr-2 h-4 w-4" />
+                {t("saveButton")}
+              </>
+            )}
           </Button>
         </div>
         <div className="flex-1" ref={reactFlowWrapper}>
