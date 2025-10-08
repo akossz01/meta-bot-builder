@@ -25,6 +25,7 @@ import { FlowBuilderSidebar } from "@/components/dashboard/FlowBuilderSidebar";
 import { QuickReplyNode } from '@/components/dashboard/nodes/QuickReplyNode';
 import { EndNode } from '@/components/dashboard/nodes/EndNode';
 import { LoopNode } from '@/components/dashboard/nodes/LoopNode';
+import { CardNode } from '@/components/dashboard/nodes/CardNode';
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -131,12 +132,13 @@ export default function ChatbotBuilderPage() {
   const nodeTypes = useMemo(() => ({ 
     messageNode: MessageNode,
     quickReplyNode: QuickReplyNode,
+    cardNode: CardNode,
     endNode: EndNode,
     loopNode: LoopNode,
   }), []);
 
   // Specific handler for updating node data
-  const updateNodeData = useCallback((nodeId: string, newData: Partial<{ message: string; replies: any[]; targetNodeId: string; waitForReply: boolean; color: string; borderColor: string; sendMessage: boolean; label: string }>) => {
+  const updateNodeData = useCallback((nodeId: string, newData: Partial<{ message: string; replies: any[]; targetNodeId: string; waitForReply: boolean; color: string; borderColor: string; sendMessage: boolean; label: string; title: string; subtitle: string; imageUrl: string; buttons: any[] }>) => {
     setNodes((nds) =>
       nds.map((node) => {
         if (node.id === nodeId) {
@@ -209,6 +211,9 @@ export default function ChatbotBuilderPage() {
                 }
                 node.data.onChange = (newData: object) => updateNodeData(node.id, newData);
             }
+            if (node.type === 'cardNode') {
+                node.data.onChange = (newData: object) => updateNodeData(node.id, newData);
+            }
             return node;
         });
 
@@ -279,6 +284,15 @@ export default function ChatbotBuilderPage() {
                     color: node.data.color,
                     borderColor: node.data.borderColor
                 };
+            } else if (node.type === 'cardNode') {
+                cleanedData = { 
+                    title: node.data.title,
+                    subtitle: node.data.subtitle,
+                    imageUrl: node.data.imageUrl,
+                    buttons: node.data.buttons,
+                    color: node.data.color,
+                    borderColor: node.data.borderColor
+                };
             } else {
                 // For other nodes like 'input'
                 cleanedData = { label: node.data.label };
@@ -333,7 +347,20 @@ export default function ChatbotBuilderPage() {
       const newNodeId = (nodes.length + 1).toString();
       let newNode: Node;
 
-      if (type === 'quickReplyNode') {
+      if (type === 'cardNode') {
+        newNode = {
+            id: newNodeId,
+            type,
+            position,
+            data: { 
+                title: 'Card Title',
+                subtitle: '',
+                imageUrl: '',
+                buttons: [{ title: 'Learn More', type: 'web_url', url: '' }],
+                onChange: (data: object) => updateNodeData(newNodeId, data) 
+            },
+        };
+      } else if (type === 'quickReplyNode') {
         newNode = {
             id: newNodeId,
             type,

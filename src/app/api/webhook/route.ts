@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
 }
 
 /**
- * Processes a postback event (e.g., a quick reply button click).
+ * Processes a postback event (e.g., button clicks from cards).
  */
 async function processPostback(event: any) {
     try {
@@ -74,9 +74,7 @@ async function processPostback(event: any) {
         const recipientId = event.recipient.id;
         const payload = event.postback.payload;
 
-        if (!payload || !payload.startsWith('QUICK_REPLY_PAYLOAD_')) return;
-
-        const replyTitleFromPayload = payload.replace('QUICK_REPLY_PAYLOAD_', '').replace(/_/g, ' ');
+        console.log(`Postback received - Payload: ${payload}`);
 
         await connectToDatabase();
 
@@ -84,53 +82,90 @@ async function processPostback(event: any) {
         if (!messengerAccount) return;
 
         const session = await UserSession.findOne({ user_psid: senderId, accountId: messengerAccount._id });
-        if (!session) return; // No active session to continue from
+        if (!session) return;
 
         const chatbot = await Chatbot.findById(session.chatbotId);
         if (!chatbot) return;
 
         const currentNode = chatbot.flow_json.nodes.find((n: any) => n.id === session.current_node_id);
-        if (!currentNode || currentNode.type !== 'quickReplyNode') return;
-
-        // Find the index of the clicked reply - use case-insensitive comparison
-        const replyIndex = currentNode.data.replies.findIndex((r: any) => 
-            r.title.toUpperCase() === replyTitleFromPayload.toUpperCase()
-        );
-        if (replyIndex === -1) {
-            console.log(`Could not find reply index for title: ${replyTitleFromPayload}`);
-            console.log(`Available replies:`, currentNode.data.replies.map((r: any) => r.title));
+        
+        // Handle card button postbacks
+        if (currentNode && currentNode.type === 'cardNode' && payload.startsWith('CARD_BUTTON_')) {
+            const buttonIndex = parseInt(payload.replace('CARD_BUTTON_', ''));
+            const sourceHandleId = `button-${buttonIndex}`;
+            
+            console.log(`Card button ${buttonIndex} clicked, looking for handle: ${sourceHandleId}`);
+            
+            let nextNode = findNextNode(chatbot.flow_json, currentNode.id, sourceHandleId);
+            
+            if (nextNode) {
+                if (nextNode.type === 'loopNode') {
+                    const targetNodeId = nextNode.data.targetNodeId;
+                    if (targetNodeId) {
+                        const targetNode = chatbot.flow_json.nodes.find((n: any) => n.id === targetNodeId);
+                        if (targetNode) {
+                            nextNode = targetNode;
+                        }
+                    }
+                }
+                
+                await sendNodeMessage(senderId, nextNode, messengerAccount.accessToken);
+                session.current_node_id = nextNode.id;
+                await session.save();
+                
+                if (nextNode.type !== 'endNode') {
+                    await autoContinueFlow(chatbot.flow_json, nextNode, senderId, session, messengerAccount.accessToken);
+                }
+            }
             return;
         }
 
-        console.log(`Quick reply clicked: "${replyTitleFromPayload}" (index: ${replyIndex})`);
-        const sourceHandleId = `handle-${replyIndex}`;
-        console.log(`Looking for edge from node ${currentNode.id} with sourceHandle: ${sourceHandleId}`);
-        
-        // Find the next node connected to this specific handle
-        let nextNode = findNextNode(chatbot.flow_json, currentNode.id, sourceHandleId);
+        // Handle quick reply postbacks
+        if (payload && payload.startsWith('QUICK_REPLY_PAYLOAD_')) {
+            const replyTitleFromPayload = payload.replace('QUICK_REPLY_PAYLOAD_', '').replace(/_/g, ' ');
 
-        if (nextNode) {
-            console.log(`Found next node: ${nextNode.id} (${nextNode.type})`);
-            // Send the next node's message
-            await sendNodeMessage(senderId, nextNode, messengerAccount.accessToken);
-            session.current_node_id = nextNode.id;
-            await session.save();
+            if (!currentNode || currentNode.type !== 'quickReplyNode') return;
 
-            // Continue the flow if the next node is a messageNode (not a quickReplyNode)
-            while (nextNode && nextNode.type === 'messageNode') {
-                const followingNode = findNextNode(chatbot.flow_json, nextNode.id);
-                if (followingNode) {
-                    await sendNodeMessage(senderId, followingNode, messengerAccount.accessToken);
-                    session.current_node_id = followingNode.id;
-                    await session.save();
-                    nextNode = followingNode;
-                } else {
-                    break; // End of flow
-                }
+            // Find the index of the clicked reply - use case-insensitive comparison
+            const replyIndex = currentNode.data.replies.findIndex((r: any) => 
+                r.title.toUpperCase() === replyTitleFromPayload.toUpperCase()
+            );
+            if (replyIndex === -1) {
+                console.log(`Could not find reply index for title: ${replyTitleFromPayload}`);
+                console.log(`Available replies:`, currentNode.data.replies.map((r: any) => r.title));
+                return;
             }
-        } else {
-            console.log(`No next node found for edge from node ${currentNode.id} with sourceHandle ${sourceHandleId}.`);
-            console.log(`Available edges:`, JSON.stringify(chatbot.flow_json.edges));
+
+            console.log(`Quick reply clicked: "${replyTitleFromPayload}" (index: ${replyIndex})`);
+            const sourceHandleId = `handle-${replyIndex}`;
+            console.log(`Looking for edge from node ${currentNode.id} with sourceHandle: ${sourceHandleId}`);
+            
+            // Find the next node connected to this specific handle
+            let nextNode = findNextNode(chatbot.flow_json, currentNode.id, sourceHandleId);
+
+            if (nextNode) {
+                console.log(`Found next node: ${nextNode.id} (${nextNode.type})`);
+                // Send the next node's message
+                await sendNodeMessage(senderId, nextNode, messengerAccount.accessToken);
+                session.current_node_id = nextNode.id;
+                await session.save();
+
+                // Continue the flow if the next node is a messageNode (not a quickReplyNode)
+                while (nextNode && nextNode.type === 'messageNode') {
+                    const followingNode = findNextNode(chatbot.flow_json, nextNode.id);
+                    if (followingNode) {
+                        await sendNodeMessage(senderId, followingNode, messengerAccount.accessToken);
+                        session.current_node_id = followingNode.id;
+                        await session.save();
+                        nextNode = followingNode;
+                    } else {
+                        break; // End of flow
+                    }
+                }
+            } else {
+                console.log(`No next node found for edge from node ${currentNode.id} with sourceHandle ${sourceHandleId}.`);
+                console.log(`Available edges:`, JSON.stringify(chatbot.flow_json.edges));
+            }
         }
     } catch(error) {
         console.error("Error processing postback:", error);
@@ -339,6 +374,46 @@ async function sendNodeMessage(psid: string, node: any, accessToken: string) {
         payload: `QUICK_REPLY_PAYLOAD_${reply.title.toUpperCase().replace(/ /g, '_')}`,
     }));
     await sendMessage(psid, { text: node.data.message, quick_replies: quickReplies }, accessToken);
+  } else if (node.type === 'cardNode') {
+    const element: any = {
+      title: node.data.title,
+    };
+    
+    if (node.data.subtitle) {
+      element.subtitle = node.data.subtitle;
+    }
+    
+    if (node.data.imageUrl) {
+      element.image_url = node.data.imageUrl;
+    }
+    
+    if (node.data.buttons && node.data.buttons.length > 0) {
+      element.buttons = node.data.buttons.map((btn: any, index: number) => {
+        if (btn.type === 'web_url') {
+          return {
+            type: 'web_url',
+            url: btn.url,
+            title: btn.title,
+          };
+        } else {
+          return {
+            type: 'postback',
+            title: btn.title,
+            payload: `CARD_BUTTON_${index}`,
+          };
+        }
+      });
+    }
+    
+    await sendMessage(psid, {
+      attachment: {
+        type: 'template',
+        payload: {
+          template_type: 'generic',
+          elements: [element],
+        },
+      },
+    }, accessToken);
   } else if (node.type === 'endNode') {
     // Check if we should send a message
     if (node.data.sendMessage !== false && node.data.message) {

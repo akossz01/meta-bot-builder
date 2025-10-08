@@ -1,5 +1,5 @@
 import React from 'react';
-import { MessageSquareText, MessageCircleQuestion, CircleOff, RotateCcw } from 'lucide-react';
+import { MessageSquareText, MessageCircleQuestion, CircleOff, RotateCcw, CreditCard } from 'lucide-react';
 
 export const FlowBuilderSidebar = () => {
   const onDragStart = (event: React.DragEvent, nodeType: string) => {
@@ -26,6 +26,14 @@ export const FlowBuilderSidebar = () => {
         >
           <MessageCircleQuestion className="h-8 w-8 text-primary" />
           <span className="text-xs font-semibold">Quick Reply</span>
+        </div>
+        <div 
+          className="bg-background border-2 p-3 rounded-md cursor-grab flex flex-col items-center gap-2 hover:bg-muted/50 transition-colors" 
+          onDragStart={(event) => onDragStart(event, 'cardNode')} 
+          draggable
+        >
+          <CreditCard className="h-8 w-8 text-primary" />
+          <span className="text-xs font-semibold">Card</span>
         </div>
         <div 
           className="bg-background border-2 border-blue-500 p-3 rounded-md cursor-grab flex flex-col items-center gap-2 hover:bg-muted/50 transition-colors" 
