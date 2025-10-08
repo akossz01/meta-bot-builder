@@ -340,9 +340,13 @@ async function sendNodeMessage(psid: string, node: any, accessToken: string) {
     }));
     await sendMessage(psid, { text: node.data.message, quick_replies: quickReplies }, accessToken);
   } else if (node.type === 'endNode') {
-    await sendMessage(psid, { text: "Thank you for chatting with us! Feel free to send another message if you need more help." }, accessToken);
+    // Check if we should send a message
+    if (node.data.sendMessage !== false && node.data.message) {
+      await sendMessage(psid, { text: node.data.message }, accessToken);
+    } else {
+      console.log(`End node reached - no message sent (sendMessage: ${node.data.sendMessage})`);
+    }
   } else if (node.type === 'loopNode') {
-    // Loop nodes don't send messages themselves, they just redirect
     console.log(`Loop node ${node.id} encountered - should not send message directly`);
   }
 }

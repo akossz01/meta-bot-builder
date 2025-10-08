@@ -27,12 +27,69 @@ import { EndNode } from '@/components/dashboard/nodes/EndNode';
 import { LoopNode } from '@/components/dashboard/nodes/LoopNode';
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
+// Color palette for nodes
+const NODE_COLORS = [
+  { name: 'Default', value: '', border: '' }, // Empty strings mean use defaults
+  { name: 'Blue', value: 'rgba(59, 130, 246, 0.1)', border: 'rgb(59, 130, 246)' },
+  { name: 'Green', value: 'rgba(34, 197, 94, 0.1)', border: 'rgb(34, 197, 94)' },
+  { name: 'Purple', value: 'rgba(168, 85, 247, 0.1)', border: 'rgb(168, 85, 247)' },
+  { name: 'Orange', value: 'rgba(249, 115, 22, 0.1)', border: 'rgb(249, 115, 22)' },
+  { name: 'Pink', value: 'rgba(236, 72, 153, 0.1)', border: 'rgb(236, 72, 153)' },
+  { name: 'Yellow', value: 'rgba(234, 179, 8, 0.1)', border: 'rgb(234, 179, 8)' },
+  { name: 'Red', value: 'rgba(239, 68, 68, 0.1)', border: 'rgb(239, 68, 68)' },
+];
 
 // Custom Node for displaying and editing a message
-function MessageNode({ data }: NodeProps<{ message: string; waitForReply?: boolean; onChange: (data: { message?: string; waitForReply?: boolean }) => void }>) {
+function MessageNode({ data }: NodeProps<{ message: string; waitForReply?: boolean; color?: string; borderColor?: string; onChange: (data: { message?: string; waitForReply?: boolean; color?: string; borderColor?: string }) => void }>) {
+  const backgroundColor = data.color || 'hsl(var(--background))';
+  const borderColor = data.borderColor || 'hsl(var(--border))';
+  const displayBorderColor = data.borderColor || 'hsl(var(--border))';
+
   return (
-    <div className="p-4 border-2 bg-background rounded-lg shadow-md w-64">
+    <div 
+      className="p-4 border-2 rounded-lg shadow-md w-64 relative bg-background"
+      style={{ 
+        ...(data.color && { backgroundColor }),
+        borderColor: displayBorderColor,
+      }}
+    >
       <Handle type="target" position={Position.Top} className="w-2 h-2" />
+      
+      {/* Color Picker Dot */}
+      <Popover>
+        <PopoverTrigger asChild>
+          <button
+            className="absolute top-2 right-2 w-4 h-4 rounded-full border-2 cursor-pointer hover:scale-110 transition-transform nodrag"
+            style={{ 
+              backgroundColor: displayBorderColor,
+              borderColor: 'hsl(var(--background))'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </PopoverTrigger>
+        <PopoverContent className="w-48 p-2" align="end">
+          <div className="grid grid-cols-4 gap-2">
+            {NODE_COLORS.map((colorOption) => (
+              <button
+                key={colorOption.name}
+                className="w-8 h-8 rounded-md border-2 hover:scale-110 transition-transform"
+                style={{
+                  backgroundColor: colorOption.value || 'hsl(var(--background))',
+                  borderColor: colorOption.border || 'hsl(var(--border))'
+                }}
+                onClick={() => data.onChange({ 
+                  color: colorOption.value || undefined,
+                  borderColor: colorOption.border || undefined
+                })}
+                title={colorOption.name}
+              />
+            ))}
+          </div>
+        </PopoverContent>
+      </Popover>
+
       <div className="flex flex-col gap-2">
         <label className="text-xs font-semibold text-muted-foreground">Reply Message</label>
         <Textarea
@@ -79,7 +136,7 @@ export default function ChatbotBuilderPage() {
   }), []);
 
   // Specific handler for updating node data
-  const updateNodeData = useCallback((nodeId: string, newData: Partial<{ message: string; replies: any[]; targetNodeId: string; waitForReply: boolean }>) => {
+  const updateNodeData = useCallback((nodeId: string, newData: Partial<{ message: string; replies: any[]; targetNodeId: string; waitForReply: boolean; color: string; borderColor: string; sendMessage: boolean; label: string }>) => {
     setNodes((nds) =>
       nds.map((node) => {
         if (node.id === nodeId) {
@@ -142,6 +199,16 @@ export default function ChatbotBuilderPage() {
                 node.data.onChange = (newData: object) => updateNodeData(node.id, newData);
                 node.data.availableNodes = availableNodes;
             }
+            if (node.type === 'endNode') {
+                // Set defaults for end node
+                if (node.data.sendMessage === undefined) {
+                    node.data.sendMessage = true;
+                }
+                if (!node.data.message) {
+                    node.data.message = 'Thank you for chatting with us! Feel free to send another message if you need more help.';
+                }
+                node.data.onChange = (newData: object) => updateNodeData(node.id, newData);
+            }
             return node;
         });
 
@@ -188,18 +255,30 @@ export default function ChatbotBuilderPage() {
             if (node.type === 'messageNode') {
                 cleanedData = { 
                     message: node.data.message,
-                    waitForReply: node.data.waitForReply !== false // Explicitly save the value
+                    waitForReply: node.data.waitForReply !== false, // Explicitly save the value
+                    color: node.data.color,
+                    borderColor: node.data.borderColor
                 };
             } else if (node.type === 'quickReplyNode') {
                 cleanedData = { 
                     message: node.data.message, 
                     replies: node.data.replies,
-                    waitForReply: node.data.waitForReply !== false // Explicitly save the value
+                    waitForReply: node.data.waitForReply !== false, // Explicitly save the value
+                    color: node.data.color,
+                    borderColor: node.data.borderColor
                 };
             } else if (node.type === 'endNode') {
-                cleanedData = { label: node.data.label || 'End' };
+                cleanedData = { 
+                    label: node.data.label || 'End',
+                    message: node.data.message,
+                    sendMessage: node.data.sendMessage !== false
+                };
             } else if (node.type === 'loopNode') {
-                cleanedData = { targetNodeId: node.data.targetNodeId };
+                cleanedData = { 
+                    targetNodeId: node.data.targetNodeId,
+                    color: node.data.color,
+                    borderColor: node.data.borderColor
+                };
             } else {
                 // For other nodes like 'input'
                 cleanedData = { label: node.data.label };
@@ -271,7 +350,12 @@ export default function ChatbotBuilderPage() {
           id: newNodeId,
           type,
           position,
-          data: { label: 'End' },
+          data: { 
+            label: 'End',
+            message: 'Thank you for chatting with us! Feel free to send another message if you need more help.',
+            sendMessage: true,
+            onChange: (data: object) => updateNodeData(newNodeId, data)
+          },
         };
       } else if (type === 'loopNode') {
         const availableNodes = nodes
