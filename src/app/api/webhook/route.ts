@@ -301,14 +301,40 @@ async function processMessage(event: any) {
   try {
     const senderId = event.sender.id;
     const recipientId = event.recipient.id;
+    const messageText = event.message.text?.trim();
 
     await connectToDatabase();
 
     const messengerAccount = await MessengerAccount.findOne({ accountId: recipientId });
     if (!messengerAccount) return console.log(`No account for page ID: ${recipientId}`);
 
-    const chatbot = await Chatbot.findOne({ accountId: messengerAccount._id, isActive: true });
+    const chatbot = await Chatbot.findOne({ 
+      accountId: messengerAccount._id, 
+      mode: { $in: ['active', 'test'] }  // Changed from isActive: true
+    });
     if (!chatbot) return console.log(`No active bot for account: ${messengerAccount.accountName}`);
+
+    // Handle test mode
+    if (chatbot.mode === 'test') {
+      const isTester = chatbot.testers.some((t: any) => t.user_psid === senderId);
+      
+      // Check if message matches test trigger
+      if (messageText === chatbot.testTrigger) {
+        // Add user as tester if not already
+        if (!isTester) {
+          await Chatbot.findByIdAndUpdate(chatbot._id, {
+            $push: { testers: { user_psid: senderId, addedAt: new Date() } }
+          });
+          console.log(`Added tester: ${senderId} for chatbot ${chatbot._id}`);
+        }
+        // Start the flow for the tester
+      } else if (!isTester) {
+        // Not a tester and didn't send the trigger - ignore
+        console.log(`Test mode: User ${senderId} not authorized, ignoring message`);
+        return;
+      }
+      // If already a tester, continue with normal flow
+    }
 
     let session = await UserSession.findOne({ user_psid: senderId, accountId: messengerAccount._id });
     const chatbotId = chatbot._id;

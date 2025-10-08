@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { PlusCircle, Bot, Loader2, MessageSquare, Power, PowerOff, Trash2, Edit } from "lucide-react";
+import { PlusCircle, Bot, Loader2, MessageSquare, Trash2, Edit, Settings, FlaskConical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -41,7 +41,9 @@ type ConnectedAccount = { _id: string; accountId: string; accountName: string; }
 type Chatbot = { 
   _id: string; 
   name: string; 
-  isActive: boolean; 
+  isActive: boolean;
+  mode?: 'active' | 'test' | 'inactive';
+  testTrigger?: string;
   accountId: { 
     accountName: string; 
     accountId: string;
@@ -58,9 +60,8 @@ export default function ChatbotsPage() {
   const [newBotName, setNewBotName] = useState("");
   const [selectedAccount, setSelectedAccount] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [activatingId, setActivatingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [deactivatingId, setDeactivatingId] = useState<string | null>(null);
+  const [changingModeId, setChangingModeId] = useState<string | null>(null);
 
   const fetchChatbots = async () => {
     setIsLoading(true);
@@ -110,36 +111,6 @@ export default function ChatbotsPage() {
     }
   };
 
-  const handleActivate = async (chatbotId: string) => {
-    setActivatingId(chatbotId);
-    try {
-      const response = await fetch(`/api/chatbots/${chatbotId}/activate`, {
-        method: 'PUT',
-      });
-      if (!response.ok) throw new Error('Failed to activate chatbot');
-      fetchChatbots();
-    } catch (error) {
-      console.error('Error activating chatbot:', error);
-    } finally {
-      setActivatingId(null);
-    }
-  };
-
-  const handleDeactivate = async (chatbotId: string) => {
-    setDeactivatingId(chatbotId);
-    try {
-      const response = await fetch(`/api/chatbots/${chatbotId}/deactivate`, {
-        method: 'PUT',
-      });
-      if (!response.ok) throw new Error('Failed to deactivate chatbot');
-      fetchChatbots();
-    } catch (error) {
-      console.error('Error deactivating chatbot:', error);
-    } finally {
-      setDeactivatingId(null);
-    }
-  };
-
   const handleDelete = async (chatbotId: string) => {
     setDeletingId(chatbotId);
     try {
@@ -152,6 +123,23 @@ export default function ChatbotsPage() {
       console.error('Error deleting chatbot:', error);
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handleModeChange = async (chatbotId: string, mode: 'active' | 'test' | 'inactive') => {
+    setChangingModeId(chatbotId);
+    try {
+      const response = await fetch(`/api/chatbots/${chatbotId}/mode`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode }),
+      });
+      if (!response.ok) throw new Error('Failed to change mode');
+      fetchChatbots();
+    } catch (error) {
+      console.error('Error changing mode:', error);
+    } finally {
+      setChangingModeId(null);
     }
   };
 
@@ -185,7 +173,7 @@ export default function ChatbotsPage() {
                 </div>
                 <div className="grid gap-2">
                     <Label htmlFor="account">Facebook Page</Label>
-                     <Select value={selectedAccount} onValueChange={setSelectedAccount}>
+                    <Select value={selectedAccount} onValueChange={setSelectedAccount}>
                         <SelectTrigger>
                             <SelectValue placeholder="Select a page..." />
                         </SelectTrigger>
@@ -219,127 +207,138 @@ export default function ChatbotsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {chatbots.map((chatbot) => (
-            <Card key={chatbot._id} className={chatbot.isActive ? 'border-primary' : ''}>
-              <CardHeader>
-                <div className="flex items-start gap-3">
-                  {chatbot.accountId?.pictureUrl ? (
-                    <img 
-                      src={chatbot.accountId.pictureUrl} 
-                      alt={chatbot.accountId.accountName}
-                      className="w-12 h-12 rounded-full object-cover flex-shrink-0"
-                    />
-                  ) : (
-                    <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                      <Bot className="h-6 w-6 text-muted-foreground" />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <CardTitle className="flex items-center gap-2 flex-wrap">
-                      <span className="truncate">{chatbot.name}</span>
-                      {chatbot.isActive && (
-                        <Badge variant="default">Active</Badge>
-                      )}
-                    </CardTitle>
-                    <CardDescription className="truncate">
-                      {chatbot.accountId?.accountName || 'Unknown Page'}
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col gap-2">
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => router.push(`/dashboard/chatbots/${chatbot._id}`)}
-                  >
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit Flow
-                  </Button>
-                  
-                  {chatbot.isActive ? (
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => handleDeactivate(chatbot._id)}
-                      disabled={deactivatingId === chatbot._id}
-                    >
-                      {deactivatingId === chatbot._id ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Deactivating...
-                        </>
-                      ) : (
-                        <>
-                          <PowerOff className="mr-2 h-4 w-4" />
-                          Deactivate
-                        </>
-                      )}
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => handleActivate(chatbot._id)}
-                      disabled={activatingId === chatbot._id}
-                    >
-                      {activatingId === chatbot._id ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Activating...
-                        </>
-                      ) : (
-                        <>
-                          <Power className="mr-2 h-4 w-4" />
-                          Activate
-                        </>
-                      )}
-                    </Button>
-                  )}
-
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="destructive"
-                        className="w-full"
-                        disabled={deletingId === chatbot._id}
-                      >
-                        {deletingId === chatbot._id ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Deleting...
-                          </>
-                        ) : (
-                          <>
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </>
+          {chatbots.map((chatbot) => {
+            const actualMode = chatbot.mode || 'inactive';
+            const isActive = actualMode === 'active' || actualMode === 'test';
+            
+            return (
+              <Card key={chatbot._id} className={isActive ? 'border-primary' : ''}>
+                <CardHeader>
+                  <div className="flex items-start gap-3">
+                    {chatbot.accountId?.pictureUrl ? (
+                      <img 
+                        src={chatbot.accountId.pictureUrl} 
+                        alt={chatbot.accountId.accountName}
+                        className="w-12 h-12 rounded-full object-cover flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                        <Bot className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <CardTitle className="flex items-center gap-2 flex-wrap">
+                        <span className="truncate">{chatbot.name}</span>
+                        {actualMode === 'active' && (
+                          <Badge variant="default">Active</Badge>
                         )}
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This will permanently delete the chatbot "{chatbot.name}" and all its flow data. This action cannot be undone.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => handleDelete(chatbot._id)}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        {actualMode === 'test' && (
+                          <Badge variant="secondary" className="gap-1">
+                            <FlaskConical className="h-3 w-3" />
+                            Test
+                          </Badge>
+                        )}
+                      </CardTitle>
+                      <CardDescription className="truncate">
+                        {chatbot.accountId?.accountName || 'Unknown Page'}
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col gap-2">
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => router.push(`/dashboard/chatbots/${chatbot._id}`)}
+                    >
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit Flow
+                    </Button>
+
+                    <div className="flex flex-col gap-2 p-2 border rounded-lg">
+                      <Label className="text-xs font-semibold">Mode</Label>
+                      <Select
+                        value={actualMode}
+                        onValueChange={(value: 'active' | 'test' | 'inactive') => handleModeChange(chatbot._id, value)}
+                        disabled={changingModeId === chatbot._id}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="inactive">Inactive</SelectItem>
+                          <SelectItem value="test">Test Mode</SelectItem>
+                          <SelectItem value="active">Active</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {changingModeId === chatbot._id && (
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          Updating...
+                        </div>
+                      )}
+                    </div>
+
+                    {actualMode === 'test' && chatbot.testTrigger && (
+                      <div className="p-2 bg-muted rounded text-xs">
+                        <p className="font-semibold mb-1">Test Trigger:</p>
+                        <code className="bg-background px-2 py-1 rounded">{chatbot.testTrigger}</code>
+                      </div>
+                    )}
+
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => router.push(`/dashboard/chatbots/${chatbot._id}/settings`)}
+                    >
+                      <Settings className="mr-2 h-4 w-4" />
+                      Settings
+                    </Button>
+
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="destructive"
+                          className="w-full"
+                          disabled={deletingId === chatbot._id}
                         >
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                          {deletingId === chatbot._id ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Deleting...
+                            </>
+                          ) : (
+                            <>
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete
+                            </>
+                          )}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will permanently delete the chatbot "{chatbot.name}" and all its flow data. This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleDelete(chatbot._id)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>

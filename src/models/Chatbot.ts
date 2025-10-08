@@ -24,12 +24,22 @@ const defaultFlow = {
   ],
 };
 
+// Helper function to generate random test trigger
+function generateTestTrigger() {
+  return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
 export interface IChatbot extends Document {
   name: string;
   accountId: Types.ObjectId;
   flow_json: object;
   userId: Types.ObjectId;
-  isActive: boolean;
+  mode: 'active' | 'test' | 'inactive';
+  testTrigger: string;
+  testers: Array<{
+    user_psid: string;
+    addedAt: Date;
+  }>;
 }
 
 const ChatbotSchema: Schema = new Schema(
@@ -52,18 +62,43 @@ const ChatbotSchema: Schema = new Schema(
       ref: "User",
       required: true,
     },
-    isActive: {
-      type: Boolean,
-      required: true,
-      default: false,
+    mode: {
+      type: String,
+      enum: ['active', 'test', 'inactive'],
+      default: 'inactive',
+      select: true,
     },
+    testTrigger: {
+      type: String,
+      default: generateTestTrigger,
+      select: true,
+    },
+    testers: [{
+      user_psid: {
+        type: String,
+        required: true,
+      },
+      addedAt: {
+        type: Date,
+        default: Date.now,
+      }
+    }]
   },
   {
     timestamps: true,
   }
 );
 
-// Create a compound index to ensure a user can't have multiple chatbots with the same name for the same account
+// Virtual property for backwards compatibility
+ChatbotSchema.virtual('isActive').get(function() {
+  return this.mode === 'active' || this.mode === 'test';
+});
+
+// Ensure virtuals are included in JSON
+ChatbotSchema.set('toJSON', { virtuals: true });
+ChatbotSchema.set('toObject', { virtuals: true });
+
+// Create a compound index
 ChatbotSchema.index({ userId: 1, accountId: 1, name: 1 }, { unique: true });
 
 export default mongoose.models.Chatbot ||
