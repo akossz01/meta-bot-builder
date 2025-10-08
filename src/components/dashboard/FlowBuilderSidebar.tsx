@@ -1,5 +1,5 @@
 import React from 'react';
-import { MessageSquareText, MessageCircleQuestion, CircleOff, RotateCcw, CreditCard } from 'lucide-react';
+import { MessageSquareText, MessageCircleQuestion, CircleOff, RotateCcw, CreditCard, Image, Layers } from 'lucide-react';
 
 export const FlowBuilderSidebar = () => {
   const onDragStart = (event: React.DragEvent, nodeType: string) => {
@@ -50,6 +50,22 @@ export const FlowBuilderSidebar = () => {
         >
           <CircleOff className="h-8 w-8 text-destructive" />
           <span className="text-xs font-semibold">End</span>
+        </div>
+        <div 
+          className="bg-background border-2 p-3 rounded-md cursor-grab flex flex-col items-center gap-2 hover:bg-muted/50 transition-colors" 
+          onDragStart={(event) => onDragStart(event, 'mediaNode')} 
+          draggable
+        >
+          <Image className="h-8 w-8 text-primary" />
+          <span className="text-xs font-semibold">Image</span>
+        </div>
+        <div 
+          className="bg-background border-2 p-3 rounded-md cursor-grab flex flex-col items-center gap-2 hover:bg-muted/50 transition-colors" 
+          onDragStart={(event) => onDragStart(event, 'carouselNode')} 
+          draggable
+        >
+          <Layers className="h-8 w-8 text-primary" />
+          <span className="text-xs font-semibold">Carousel</span>
         </div>
       </div>
     </aside>

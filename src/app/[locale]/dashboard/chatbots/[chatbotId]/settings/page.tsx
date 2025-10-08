@@ -22,6 +22,8 @@ import { useToast } from "@/hooks/use-toast";
 type Tester = {
   user_psid: string;
   addedAt: string;
+  name?: string;
+  profilePic?: string;
 };
 
 type Chatbot = {
@@ -279,11 +281,29 @@ export default function ChatbotSettingsPage() {
                         key={tester.user_psid}
                         className="flex items-center justify-between p-3 border rounded-lg"
                       >
-                        <div className="flex-1">
-                          <p className="font-mono text-sm">{tester.user_psid}</p>
-                          <p className="text-xs text-muted-foreground">
-                            Added {new Date(tester.addedAt).toLocaleString()}
-                          </p>
+                        <div className="flex items-center gap-3 flex-1">
+                          {tester.profilePic ? (
+                            <img 
+                              src={tester.profilePic} 
+                              alt={tester.name || 'User'} 
+                              className="w-10 h-10 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                              <User className="h-5 w-5 text-muted-foreground" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">
+                              {tester.name || 'Unknown User'}
+                            </p>
+                            <p className="text-xs text-muted-foreground font-mono truncate">
+                              {tester.user_psid}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Added {new Date(tester.addedAt).toLocaleString()}
+                            </p>
+                          </div>
                         </div>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
@@ -303,7 +323,7 @@ export default function ChatbotSettingsPage() {
                             <AlertDialogHeader>
                               <AlertDialogTitle>Remove Tester?</AlertDialogTitle>
                               <AlertDialogDescription>
-                                This user will no longer have access to the test bot. They can re-gain 
+                                {tester.name || 'This user'} will no longer have access to the test bot. They can re-gain 
                                 access by sending the test trigger again.
                               </AlertDialogDescription>
                             </AlertDialogHeader>

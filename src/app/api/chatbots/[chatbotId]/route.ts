@@ -16,13 +16,45 @@ export async function GET(req: NextRequest, { params: paramsPromise }: { params:
     
     await connectToDatabase();
 
-    const chatbot = await Chatbot.findOne({ _id: chatbotId, userId });
+    const chatbot = await Chatbot.findOne({ _id: chatbotId, userId }).populate('accountId', 'accessToken');
 
     if (!chatbot) {
       return NextResponse.json({ message: "Chatbot not found or access denied." }, { status: 404 });
     }
 
-    return NextResponse.json(chatbot);
+    // Enrich tester data with names from Facebook
+    const enrichedTesters = await Promise.all(
+      chatbot.testers.map(async (tester: any) => {
+        try {
+          const response = await fetch(
+            `https://graph.facebook.com/v20.0/${tester.user_psid}?fields=name,profile_pic&access_token=${chatbot.accountId.accessToken}`
+          );
+          const data = await response.json();
+          
+          return {
+            user_psid: tester.user_psid,
+            addedAt: tester.addedAt,
+            name: data.name || 'Unknown User',
+            profilePic: data.profile_pic || null,
+          };
+        } catch (error) {
+          console.error(`Failed to fetch profile for ${tester.user_psid}:`, error);
+          return {
+            user_psid: tester.user_psid,
+            addedAt: tester.addedAt,
+            name: 'Unknown User',
+            profilePic: null,
+          };
+        }
+      })
+    );
+
+    const chatbotData = chatbot.toObject();
+    chatbotData.testers = enrichedTesters;
+    // Remove sensitive data
+    delete chatbotData.accountId;
+
+    return NextResponse.json(chatbotData);
   } catch (error) {
     console.error(`Failed to fetch chatbot:`, error);
     return NextResponse.json({ message: "An error occurred." }, { status: 500 });

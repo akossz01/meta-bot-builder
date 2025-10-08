@@ -30,6 +30,8 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
+import { MediaNode } from '@/components/dashboard/nodes/MediaNode';
+import { CarouselNode } from '@/components/dashboard/nodes/CarouselNode';
 
 // Color palette for nodes
 const NODE_COLORS = [
@@ -135,12 +137,14 @@ export default function ChatbotBuilderPage() {
     messageNode: MessageNode,
     quickReplyNode: QuickReplyNode,
     cardNode: CardNode,
+    mediaNode: MediaNode,
+    carouselNode: CarouselNode,
     endNode: EndNode,
     loopNode: LoopNode,
   }), []);
 
   // Specific handler for updating node data
-  const updateNodeData = useCallback((nodeId: string, newData: Partial<{ message: string; replies: any[]; targetNodeId: string; waitForReply: boolean; color: string; borderColor: string; sendMessage: boolean; label: string; title: string; subtitle: string; imageUrl: string; buttons: any[] }>) => {
+  const updateNodeData = useCallback((nodeId: string, newData: Partial<{ message: string; replies: any[]; targetNodeId: string; waitForReply: boolean; color: string; borderColor: string; sendMessage: boolean; label: string; title: string; subtitle: string; imageUrl: string; buttons: any[]; cards: any[] }>) => {
     setNodes((nds) =>
       nds.map((node) => {
         if (node.id === nodeId) {
@@ -214,6 +218,12 @@ export default function ChatbotBuilderPage() {
                 node.data.onChange = (newData: object) => updateNodeData(node.id, newData);
             }
             if (node.type === 'cardNode') {
+                node.data.onChange = (newData: object) => updateNodeData(node.id, newData);
+            }
+            if (node.type === 'mediaNode') {
+                node.data.onChange = (newData: object) => updateNodeData(node.id, newData);
+            }
+            if (node.type === 'carouselNode') {
                 node.data.onChange = (newData: object) => updateNodeData(node.id, newData);
             }
             return node;
@@ -309,6 +319,18 @@ export default function ChatbotBuilderPage() {
                     color: node.data.color,
                     borderColor: node.data.borderColor
                 };
+            } else if (node.type === 'mediaNode') {
+                cleanedData = { 
+                    imageUrl: node.data.imageUrl,
+                    color: node.data.color,
+                    borderColor: node.data.borderColor
+                };
+            } else if (node.type === 'carouselNode') {
+                cleanedData = { 
+                    cards: node.data.cards,
+                    color: node.data.color,
+                    borderColor: node.data.borderColor
+                };
             } else {
                 // For other nodes like 'input'
                 cleanedData = { label: node.data.label };
@@ -376,7 +398,32 @@ export default function ChatbotBuilderPage() {
       
       let newNode: Node;
 
-      if (type === 'cardNode') {
+      if (type === 'mediaNode') {
+        newNode = {
+            id: newNodeId,
+            type,
+            position,
+            data: { 
+                imageUrl: '',
+                onChange: (data: object) => updateNodeData(newNodeId, data) 
+            },
+        };
+      } else if (type === 'carouselNode') {
+        newNode = {
+            id: newNodeId,
+            type,
+            position,
+            data: { 
+                cards: [{
+                    title: 'Card 1',
+                    subtitle: '',
+                    imageUrl: '',
+                    buttons: [{ title: 'Learn More', type: 'web_url', url: '' }]
+                }],
+                onChange: (data: object) => updateNodeData(newNodeId, data) 
+            },
+        };
+      } else if (type === 'cardNode') {
         newNode = {
             id: newNodeId,
             type,

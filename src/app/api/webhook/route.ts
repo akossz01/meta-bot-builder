@@ -101,6 +101,45 @@ async function processPostback(event: any) {
         const currentNode = chatbot.flow_json.nodes.find((n: any) => n.id === session.current_node_id);
         console.log('Current node:', currentNode ? `${currentNode.id} (${currentNode.type})` : 'not found');
 
+        // Handle carousel button postbacks
+        if (currentNode && currentNode.type === 'carouselNode' && payload.startsWith('CAROUSEL_CARD_')) {
+            const matches = payload.match(/CAROUSEL_CARD_(\d+)_BUTTON_(\d+)/);
+            if (matches) {
+                const cardIndex = parseInt(matches[1]);
+                const buttonIndex = parseInt(matches[2]);
+                const sourceHandleId = `card-${cardIndex}-button-${buttonIndex}`;
+
+                console.log(`Carousel card ${cardIndex} button ${buttonIndex} clicked`);
+
+                let nextNode = findNextNode(chatbot.flow_json, currentNode.id, sourceHandleId);
+
+                if (nextNode) {
+                    console.log(`Found next node: ${nextNode.id} (${nextNode.type})`);
+
+                    if (nextNode.type === 'loopNode') {
+                        const targetNodeId = nextNode.data.targetNodeId;
+                        if (targetNodeId) {
+                            const targetNode = chatbot.flow_json.nodes.find((n: any) => n.id === targetNodeId);
+                            if (targetNode) {
+                                nextNode = targetNode;
+                            }
+                        }
+                    }
+
+                    await sendNodeMessage(senderId, nextNode, messengerAccount.accessToken);
+                    session.current_node_id = nextNode.id;
+                    await session.save();
+
+                    if (nextNode.type !== 'endNode') {
+                        await autoContinueFlow(chatbot.flow_json, nextNode, senderId, session, messengerAccount.accessToken);
+                    }
+                } else {
+                    console.log(`No next node found for handle: ${sourceHandleId}`);
+                }
+            }
+            return;
+        }
+
         // Handle card button postbacks
         if (currentNode && currentNode.type === 'cardNode' && payload.startsWith('CARD_BUTTON_')) {
             const buttonIndex = parseInt(payload.replace('CARD_BUTTON_', ''));
@@ -444,6 +483,62 @@ function findNextNode(flow: any, currentNodeId: string, sourceHandle?: string) {
 async function sendNodeMessage(psid: string, node: any, accessToken: string) {
     if (node.type === 'messageNode') {
         await sendMessage(psid, { text: node.data.message }, accessToken);
+    } else if (node.type === 'mediaNode') {
+        if (node.data.imageUrl) {
+            await sendMessage(psid, {
+                attachment: {
+                    type: 'image',
+                    payload: {
+                        url: node.data.imageUrl,
+                        is_reusable: true
+                    }
+                }
+            }, accessToken);
+        }
+    } else if (node.type === 'carouselNode') {
+        const elements = node.data.cards.map((card: any) => {
+            const element: any = {
+                title: card.title,
+            };
+
+            if (card.subtitle) {
+                element.subtitle = card.subtitle;
+            }
+
+            if (card.imageUrl) {
+                element.image_url = card.imageUrl;
+            }
+
+            if (card.buttons && card.buttons.length > 0) {
+                element.buttons = card.buttons.map((btn: any, cardIndex: number, btnIndex: number) => {
+                    if (btn.type === 'web_url') {
+                        return {
+                            type: 'web_url',
+                            url: btn.url,
+                            title: btn.title,
+                        };
+                    } else {
+                        return {
+                            type: 'postback',
+                            title: btn.title,
+                            payload: `CAROUSEL_CARD_${cardIndex}_BUTTON_${btnIndex}`,
+                        };
+                    }
+                });
+            }
+
+            return element;
+        });
+
+        await sendMessage(psid, {
+            attachment: {
+                type: 'template',
+                payload: {
+                    template_type: 'generic',
+                    elements: elements,
+                },
+            },
+        }, accessToken);
     } else if (node.type === 'quickReplyNode') {
         const quickReplies = node.data.replies.map((reply: any) => ({
             content_type: 'text',
@@ -540,6 +635,40 @@ async function autoContinueFlow(flow: any, currentNode: any, senderId: string, s
     console.log(`Starting autoContinueFlow from node ${node.id}, type: ${node.type}`);
 
     while (node) {
+        // For media and carousel nodes, check if they have postback buttons
+        if (node.type === 'carouselNode') {
+            const hasPostbackButtons = node.data.cards?.some((card: any) => 
+                card.buttons?.some((btn: any) => btn.type === 'postback')
+            );
+            if (!hasPostbackButtons) {
+                console.log(`Carousel node ${node.id} has no postback buttons, auto-continuing`);
+                const nextNode = findNextNode(flow, node.id, 'default-output');
+                if (nextNode) {
+                    await sendNodeMessage(senderId, nextNode, accessToken);
+                    session.current_node_id = nextNode.id;
+                    await session.save();
+                    node = nextNode;
+                    continue;
+                }
+            }
+            console.log(`Carousel node ${node.id} has postback buttons, waiting for interaction`);
+            break;
+        }
+
+        // Media nodes always auto-continue
+        if (node.type === 'mediaNode') {
+            console.log(`Media node ${node.id}, auto-continuing`);
+            const nextNode = findNextNode(flow, node.id);
+            if (nextNode) {
+                await sendNodeMessage(senderId, nextNode, accessToken);
+                session.current_node_id = nextNode.id;
+                await session.save();
+                node = nextNode;
+                continue;
+            }
+            break;
+        }
+
         // For card nodes, check if they have only web_url buttons (no postback buttons)
         // If so, auto-continue through the default-output
         if (node.type === 'cardNode') {
