@@ -33,8 +33,19 @@
   },
   "Dashboard": {
     "title": "Dashboard",
-    "welcome": "Welcome to your dashboard!",
-    "logout": "Logout"
+    "welcome": "Welcome to your Dashboard!",
+    "welcomeDescription": "This is your central hub for managing chatbots, connections, and settings.",
+    "logout": "Logout",
+    "navDashboard": "Dashboard",
+    "navConnections": "Connections",
+    "navSettings": "Settings"
+  },
+  "Connections": {
+    "title": "Manage Your Connections",
+    "description": "Connect your social media accounts to start automating conversations.",
+    "connectFacebook": "Connect Facebook Page",
+    "connectedAccounts": "Connected Accounts",
+    "noAccounts": "You haven't connected any accounts yet."
   },
   "Metadata": {
     "title": "AI Chatbot Builder for Messenger & WhatsApp",

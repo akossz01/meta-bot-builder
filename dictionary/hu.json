@@ -31,8 +31,19 @@
     },
     "Dashboard": {
       "title": "Vezérlőpult",
-      "welcome": "Üdvözöljük a vezérlőpultján!",
-      "logout": "Kijelentkezés"
+      "welcome": "Üdvözöljük a Vezérlőpulton!",
+      "welcomeDescription": "Ez a központi felület a chatbotok, kapcsolatok és beállítások kezeléséhez.",
+      "logout": "Kijelentkezés",
+      "navDashboard": "Vezérlőpult",
+      "navConnections": "Kapcsolatok",
+      "navSettings": "Beállítások"
+    },
+    "Connections": {
+      "title": "Kapcsolatok Kezelése",
+      "description": "Csatlakoztassa közösségi média fiókjait a beszélgetések automatizálásának megkezdéséhez.",
+      "connectFacebook": "Facebook Oldal Csatlakoztatása",
+      "connectedAccounts": "Csatlakoztatott Fiókok",
+      "noAccounts": "Még nem csatlakoztatott egyetlen fiókot sem."
     },
     "Metadata": {
       "title": "MI Chatbot Építő Messengerre és WhatsAppra",

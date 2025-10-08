@@ -31,8 +31,19 @@
     },
     "Dashboard": {
       "title": "Panou de Control",
-      "welcome": "Bun venit în panoul tău de control!",
-      "logout": "Deconectare"
+      "welcome": "Bun venit în Panoul de Control!",
+      "welcomeDescription": "Acesta este centrul tău pentru gestionarea chatboților, conexiunilor și setărilor.",
+      "logout": "Deconectare",
+      "navDashboard": "Panou Control",
+      "navConnections": "Conexiuni",
+      "navSettings": "Setări"
+    },
+    "Connections": {
+      "title": "Gestionați Conexiunile",
+      "description": "Conectați-vă conturile de social media pentru a începe automatizarea conversațiilor.",
+      "connectFacebook": "Conectați Pagina de Facebook",
+      "connectedAccounts": "Conturi Conectate",
+      "noAccounts": "Nu ați conectat încă niciun cont."
     },
     "Metadata": {
       "title": "Constructor de Chatboți AI pentru Messenger & WhatsApp",
