@@ -3,6 +3,7 @@ import crypto from "crypto";
 import connectToDatabase from "@/lib/mongodb";
 import MessengerAccount from "@/models/MessengerAccount";
 import Chatbot from "@/models/Chatbot";
+import UserSession from "@/models/UserSession";
 
 const VERIFY_TOKEN = process.env.META_VERIFY_TOKEN;
 const APP_SECRET = process.env.META_APP_SECRET;
@@ -49,9 +50,12 @@ export async function POST(req: NextRequest) {
   if (payload.object === "page") {
     for (const entry of payload.entry) {
       for (const event of entry.messaging) {
-        if (event.message && event.message.text) {
+        if (event.message && !event.message.is_echo) { // Handle incoming text messages
           // Asynchronously process the message to respond quickly
           processMessage(event);
+        } else if (event.postback) { // Handle quick reply clicks
+          // Asynchronously process the postback
+          processPostback(event);
         }
       }
     }
@@ -61,6 +65,54 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ status: "success" }, { status: 200 });
 }
 
+/**
+ * Processes a postback event (e.g., a quick reply button click).
+ */
+async function processPostback(event: any) {
+    try {
+        const senderId = event.sender.id;
+        const recipientId = event.recipient.id;
+        const payload = event.postback.payload;
+
+        if (!payload || !payload.startsWith('QUICK_REPLY_PAYLOAD_')) return;
+
+        const replyTitle = payload.replace('QUICK_REPLY_PAYLOAD_', '').replace(/_/g, ' ');
+
+        await connectToDatabase();
+
+        const messengerAccount = await MessengerAccount.findOne({ accountId: recipientId });
+        if (!messengerAccount) return;
+
+        const session = await UserSession.findOne({ user_psid: senderId, accountId: messengerAccount._id });
+        if (!session) return; // No active session to continue from
+
+        const chatbot = await Chatbot.findById(session.chatbotId); // Assuming we'll add chatbotId to session
+        if (!chatbot) return;
+
+        const currentNode = chatbot.flow_json.nodes.find((n: any) => n.id === session.current_node_id);
+        if (!currentNode || currentNode.type !== 'quickReplyNode') return;
+
+        // Find the index of the clicked reply
+        const replyIndex = currentNode.data.replies.findIndex((r: any) => r.title.toUpperCase() === replyTitle);
+        if (replyIndex === -1) return;
+
+        const sourceHandleId = `handle-${replyIndex}`;
+        
+        // Find the next node connected to this specific handle
+        const nextNode = findNextNode(chatbot.flow_json, currentNode.id, sourceHandleId);
+
+        if (nextNode) {
+            await sendNodeMessage(senderId, nextNode, messengerAccount.accessToken);
+            session.current_node_id = nextNode.id;
+            await session.save();
+        } else {
+            console.log(`End of flow reached for user ${senderId} after quick reply.`);
+        }
+
+    } catch(error) {
+        console.error("Error processing postback:", error);
+    }
+}
 
 /**
  * Helper function to find the chatbot's reply and send it.
@@ -72,46 +124,88 @@ async function processMessage(event: any) {
 
     await connectToDatabase();
 
-    // Find the MessengerAccount associated with your Page ID
     const messengerAccount = await MessengerAccount.findOne({ accountId: recipientId });
-    if (!messengerAccount) {
-      console.log(`No MessengerAccount found for page ID: ${recipientId}`);
-      return;
-    }
+    if (!messengerAccount) return console.log(`No account for page ID: ${recipientId}`);
 
-    // Find the active chatbot for this account
     const chatbot = await Chatbot.findOne({ accountId: messengerAccount._id, isActive: true });
+    if (!chatbot) return console.log(`No active bot for account: ${messengerAccount.accountName}`);
+
+    let session = await UserSession.findOne({ user_psid: senderId, accountId: messengerAccount._id });
+    const chatbotId = chatbot._id; // Get the chatbot ID
     
-    if (!chatbot) {
-      console.log(`No active chatbot found for account: ${messengerAccount.accountName}`);
-      return;
+    let currentNodeId;
+    if (!session) {
+      // New user session, start from the beginning
+      const startNode = chatbot.flow_json.nodes.find((node: any) => node.type === 'input');
+      if (!startNode) return console.log("No 'start' node found in flow.");
+      currentNodeId = startNode.id;
+      
+      session = new UserSession({
+          user_psid: senderId,
+          accountId: messengerAccount._id,
+          current_node_id: currentNodeId,
+          chatbotId, // Store the chatbotId in the session
+      });
+    } else {
+      // Existing user, get their current position
+      currentNodeId = session.current_node_id;
+      session.chatbotId = chatbotId; // Ensure session is up-to-date with active bot
     }
 
-    // Find the reply message from the flow_json (our simple MVP logic)
-    const messageNode = chatbot.flow_json.nodes.find((node: any) => node.type === 'messageNode');
-    if (!messageNode || !messageNode.data.message) {
-      console.log(`No reply message found in chatbot: ${chatbot.name}`);
-      return;
+    const currentNode = chatbot.flow_json.nodes.find((n: any) => n.id === currentNodeId);
+    // If user is at a quick reply node and types something, do nothing. They must click a button.
+    if (currentNode && currentNode.type === 'quickReplyNode') return;
+
+    // Determine the next step in the flow
+    const nextNode = findNextNode(chatbot.flow_json, currentNodeId);
+
+    if (nextNode) {
+      await sendNodeMessage(senderId, nextNode, messengerAccount.accessToken);
+      // Update the session to the new node
+      session.current_node_id = nextNode.id;
+      await session.save();
+    } else {
+      // End of conversation or dead end
+      console.log(`End of flow reached for user ${senderId} at node ${currentNodeId}`);
     }
-    
-    const replyText = messageNode.data.message;
-
-    // Send the reply
-    await sendMessage(senderId, replyText, messengerAccount.accessToken);
-
   } catch (error) {
     console.error("Error processing message:", error);
   }
 }
 
 /**
+ * Finds the next node in the flow based on the current node ID.
+ */
+function findNextNode(flow: any, currentNodeId: string, sourceHandle?: string) {
+    const edge = flow.edges.find((e: any) => e.source === currentNodeId && e.sourceHandle === (sourceHandle || null));
+    if (!edge) return null;
+    return flow.nodes.find((n: any) => n.id === edge.target);
+}
+
+/**
+ * Sends a message to the user based on the node type.
+ */
+async function sendNodeMessage(psid: string, node: any, accessToken: string) {
+  if (node.type === 'messageNode') {
+    await sendMessage(psid, { text: node.data.message }, accessToken);
+  } else if (node.type === 'quickReplyNode') {
+    const quickReplies = node.data.replies.map((reply: any) => ({
+        content_type: 'text',
+        title: reply.title,
+        payload: `QUICK_REPLY_PAYLOAD_${reply.title.toUpperCase().replace(/ /g, '_')}`,
+    }));
+    await sendMessage(psid, { text: node.data.message, quick_replies: quickReplies }, accessToken);
+  }
+}
+
+/**
  * Sends a message back to the user via the Graph API.
  */
-async function sendMessage(psid: string, message: string, accessToken: string) {
+async function sendMessage(psid: string, messagePayload: object, accessToken: string) {
   const url = `https://graph.facebook.com/v20.0/me/messages?access_token=${accessToken}`;
   const payload = {
     recipient: { id: psid },
-    message: { text: message },
+    message: messagePayload,
     messaging_type: "RESPONSE",
   };
 
