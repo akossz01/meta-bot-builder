@@ -40,10 +40,9 @@ export default async function RootLayout({
   // Enable static rendering
   setRequestLocale(locale);
 
-  const isArabic = locale === "ar";
   const t = await getTranslations({ locale, namespace: "Metadata" });
   return (
-    <html lang={locale} dir={isArabic ? "rtl" : "ltr"} suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.ico" />
         <meta name="theme-color" content="#000000" />
@@ -83,7 +82,7 @@ export default async function RootLayout({
   );
 }
 
-const locales = ["en", "ar", "zh", "es", "ja"] as const;
+const locales = ["en", "ro", "hu"] as const;
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
@@ -131,10 +130,8 @@ export async function generateMetadata({
       canonical: DOMAIN,
       languages: {
         en: `${DOMAIN}/en`,
-        ar: `${DOMAIN}/ar`,
-        zh: `${DOMAIN}/zh`,
-        es: `${DOMAIN}/es`,
-        ja: `${DOMAIN}/ja`,
+        ro: `${DOMAIN}/ro`,
+        hu: `${DOMAIN}/hu`,
       },
     },
     robots: {

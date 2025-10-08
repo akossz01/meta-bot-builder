@@ -1,0 +1,32 @@
+{
+    "Index": {
+      "title": "Hozzon létre MI Chatbotokat Messengerre és WhatsAppra",
+      "description": "Platformunk lehetővé teszi, hogy egyetlen sor kód írása nélkül építsen, képezzen és telepítsen hatékony MI chatbotokat vállalkozása számára. Automatizálja a beszélgetéseket, vonja be az ügyfeleket és kezelje a támogatást erőfeszítés nélkül.",
+      "getStarted": "Kezdje el",
+      "login": "Bejelentkezés"
+    },
+    "Auth": {
+      "loginTitle": "Üdvözöljük újra",
+      "loginDescription": "Adja meg hitelesítő adatait a vezérlőpulthoz való hozzáféréshez.",
+      "registerTitle": "Hozzon létre egy Fiókot",
+      "registerDescription": "Kezdje el építeni MI chatbotját percek alatt.",
+      "emailLabel": "E-mail",
+      "passwordLabel": "Jelszó",
+      "loginButton": "Bejelentkezés",
+      "registerButton": "Fiók Létrehozása",
+      "noAccount": "Nincs még fiókja?",
+      "haveAccount": "Már van fiókja?",
+      "signUp": "Regisztráció",
+      "signIn": "Bejelentkezés"
+    },
+    "Dashboard": {
+      "title": "Vezérlőpult",
+      "welcome": "Üdvözöljük a vezérlőpultján!",
+      "logout": "Kijelentkezés"
+    },
+    "Metadata": {
+      "title": "MI Chatbot Építő Messengerre és WhatsAppra",
+      "description": "Építsen kód nélküli MI chatbotokat a Facebook Messengeren és WhatsAppon folytatott beszélgetések automatizálásához. Vonja be az ügyfeleket, kezelje a támogatást és generáljon leadeket.",
+      "keywords": "chatbot, mi, messenger, whatsapp, saas, automatizálás, kód nélkül"
+    }
+  }

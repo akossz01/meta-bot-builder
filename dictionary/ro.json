@@ -1,0 +1,32 @@
+{
+    "Index": {
+      "title": "Creați Chatboți AI pentru Messenger și WhatsApp",
+      "description": "Platforma noastră vă permite să construiți, să antrenați și să implementați chatboți AI puternici pentru afacerea dvs. fără a scrie o singură linie de cod. Automatizați conversațiile, interacționați cu clienții și gestionați suportul fără efort.",
+      "getStarted": "Începe Acum",
+      "login": "Autentificare"
+    },
+    "Auth": {
+      "loginTitle": "Bine ai revenit",
+      "loginDescription": "Introduceți datele de autentificare pentru a accesa panoul de control.",
+      "registerTitle": "Creează un Cont",
+      "registerDescription": "Începeți să vă construiți chatbot-ul AI în câteva minute.",
+      "emailLabel": "Email",
+      "passwordLabel": "Parolă",
+      "loginButton": "Autentificare",
+      "registerButton": "Creează Cont",
+      "noAccount": "Nu ai cont?",
+      "haveAccount": "Ai deja un cont?",
+      "signUp": "Înregistrează-te",
+      "signIn": "Conectează-te"
+    },
+    "Dashboard": {
+      "title": "Panou de Control",
+      "welcome": "Bun venit în panoul tău de control!",
+      "logout": "Deconectare"
+    },
+    "Metadata": {
+      "title": "Constructor de Chatboți AI pentru Messenger & WhatsApp",
+      "description": "Construiți chatboți AI fără cod pentru a automatiza conversațiile pe Facebook Messenger și WhatsApp. Interacționați cu clienții, gestionați suportul și generați lead-uri.",
+      "keywords": "chatbot, ai, messenger, whatsapp, saas, automatizare, fără cod"
+    }
+  }

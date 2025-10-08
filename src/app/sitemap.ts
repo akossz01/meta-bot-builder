@@ -2,7 +2,7 @@ import { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = "https://next-app-i18n-starter.vercel.app";
-  const locales = ["en", "ar", "zh", "es", "ja"] as const;
+  const locales = ["en", "ro", "hu"] as const;
 
   return [
     {
