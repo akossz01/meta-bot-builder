@@ -382,19 +382,24 @@ async function sendMessage(psid: string, messagePayload: object, accessToken: st
 async function autoContinueFlow(flow: any, currentNode: any, senderId: string, session: any, accessToken: string) {
     let node = currentNode;
     
+    console.log(`Starting autoContinueFlow from node ${node.id}, type: ${node.type}, waitForReply: ${node.data.waitForReply}`);
+    
     while (node) {
-        // Check if we should wait for reply
+        // Check if we should wait for reply (default to true if undefined)
         const shouldWait = node.data.waitForReply !== false;
+        
+        console.log(`Node ${node.id}: waitForReply=${node.data.waitForReply}, shouldWait=${shouldWait}`);
         
         // Stop if this node waits for reply, is a quick reply, or is an end node
         if (shouldWait || node.type === 'quickReplyNode' || node.type === 'endNode') {
+            console.log(`Stopping auto-continue at node ${node.id} (shouldWait: ${shouldWait}, type: ${node.type})`);
             break;
         }
 
         // Find the next node
         const nextNode = findNextNode(flow, node.id);
         if (!nextNode) {
-            console.log(`End of auto-continue flow at node ${node.id}`);
+            console.log(`End of auto-continue flow at node ${node.id} - no next node found`);
             break;
         }
 
@@ -417,7 +422,7 @@ async function autoContinueFlow(flow: any, currentNode: any, senderId: string, s
             }
         }
 
-        console.log(`Auto-continuing to node ${nodeToSend.id} (waitForReply: ${nodeToSend.data.waitForReply !== false})`);
+        console.log(`Auto-continuing to node ${nodeToSend.id} (type: ${nodeToSend.type}, waitForReply: ${nodeToSend.data.waitForReply})`);
         
         // Send the message
         await sendNodeMessage(senderId, nodeToSend, accessToken);

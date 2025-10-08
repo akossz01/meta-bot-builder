@@ -125,10 +125,17 @@ export default function ChatbotBuilderPage() {
 
         // Prepare nodes with the onChange handler
         const initialNodes = data.flow_json.nodes.map((node: Node) => {
+            // Ensure waitForReply defaults to true for backwards compatibility
             if (node.type === 'messageNode') {
+                if (node.data.waitForReply === undefined) {
+                    node.data.waitForReply = true;
+                }
                 node.data.onChange = (newData: object) => updateNodeData(node.id, newData);
             }
             if (node.type === 'quickReplyNode') {
+                if (node.data.waitForReply === undefined) {
+                    node.data.waitForReply = true;
+                }
                 node.data.onChange = (newData: object) => updateNodeData(node.id, newData);
             }
             if (node.type === 'loopNode') {
@@ -181,13 +188,13 @@ export default function ChatbotBuilderPage() {
             if (node.type === 'messageNode') {
                 cleanedData = { 
                     message: node.data.message,
-                    waitForReply: node.data.waitForReply !== false // Default to true
+                    waitForReply: node.data.waitForReply !== false // Explicitly save the value
                 };
             } else if (node.type === 'quickReplyNode') {
                 cleanedData = { 
                     message: node.data.message, 
                     replies: node.data.replies,
-                    waitForReply: node.data.waitForReply !== false // Default to true
+                    waitForReply: node.data.waitForReply !== false // Explicitly save the value
                 };
             } else if (node.type === 'endNode') {
                 cleanedData = { label: node.data.label || 'End' };
