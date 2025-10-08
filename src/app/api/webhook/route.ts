@@ -48,8 +48,13 @@ export async function POST(req: NextRequest) {
   if (payload.object === "page") {
     for (const entry of payload.entry) {
       for (const event of entry.messaging) {
-        if (event.message && !event.message.is_echo) {
-          processMessage(event);
+        if (event.message) {
+          // Check if it's a quick reply
+          if (event.message.quick_reply) {
+            processQuickReply(event);
+          } else if (!event.message.is_echo) {
+            processMessage(event);
+          }
         } else if (event.postback) {
           processPostback(event);
         }
@@ -87,30 +92,182 @@ async function processPostback(event: any) {
         const currentNode = chatbot.flow_json.nodes.find((n: any) => n.id === session.current_node_id);
         if (!currentNode || currentNode.type !== 'quickReplyNode') return;
 
-        // Find the index of the clicked reply
-        const replyIndex = currentNode.data.replies.findIndex((r: any) => r.title.toUpperCase() === replyTitleFromPayload);
+        // Find the index of the clicked reply - use case-insensitive comparison
+        const replyIndex = currentNode.data.replies.findIndex((r: any) => 
+            r.title.toUpperCase() === replyTitleFromPayload.toUpperCase()
+        );
         if (replyIndex === -1) {
             console.log(`Could not find reply index for title: ${replyTitleFromPayload}`);
+            console.log(`Available replies:`, currentNode.data.replies.map((r: any) => r.title));
             return;
         }
 
+        console.log(`Quick reply clicked: "${replyTitleFromPayload}" (index: ${replyIndex})`);
         const sourceHandleId = `handle-${replyIndex}`;
+        console.log(`Looking for edge from node ${currentNode.id} with sourceHandle: ${sourceHandleId}`);
         
         // Find the next node connected to this specific handle
-        const nextNode = findNextNode(chatbot.flow_json, currentNode.id, sourceHandleId);
+        let nextNode = findNextNode(chatbot.flow_json, currentNode.id, sourceHandleId);
 
         if (nextNode) {
+            console.log(`Found next node: ${nextNode.id} (${nextNode.type})`);
+            // Send the next node's message
             await sendNodeMessage(senderId, nextNode, messengerAccount.accessToken);
             session.current_node_id = nextNode.id;
             await session.save();
+
+            // Continue the flow if the next node is a messageNode (not a quickReplyNode)
+            while (nextNode && nextNode.type === 'messageNode') {
+                const followingNode = findNextNode(chatbot.flow_json, nextNode.id);
+                if (followingNode) {
+                    await sendNodeMessage(senderId, followingNode, messengerAccount.accessToken);
+                    session.current_node_id = followingNode.id;
+                    await session.save();
+                    nextNode = followingNode;
+                } else {
+                    break; // End of flow
+                }
+            }
         } else {
-            console.log(`End of flow reached for user ${senderId} after quick reply from handle ${sourceHandleId}.`);
+            console.log(`No next node found for edge from node ${currentNode.id} with sourceHandle ${sourceHandleId}.`);
+            console.log(`Available edges:`, JSON.stringify(chatbot.flow_json.edges));
         }
     } catch(error) {
         console.error("Error processing postback:", error);
     }
 }
 
+/**
+ * Processes a quick reply event.
+ */
+async function processQuickReply(event: any) {
+    try {
+        const senderId = event.sender.id;
+        const recipientId = event.recipient.id;
+        const payload = event.message.quick_reply.payload;
+
+        console.log(`Quick reply received - Payload: ${payload}`);
+
+        if (!payload || !payload.startsWith('QUICK_REPLY_PAYLOAD_')) return;
+
+        const replyTitleFromPayload = payload.replace('QUICK_REPLY_PAYLOAD_', '').replace(/_/g, ' ');
+
+        await connectToDatabase();
+
+        const messengerAccount = await MessengerAccount.findOne({ accountId: recipientId });
+        if (!messengerAccount) {
+            console.log(`No messenger account found for recipient: ${recipientId}`);
+            return;
+        }
+
+        const session = await UserSession.findOne({ user_psid: senderId, accountId: messengerAccount._id });
+        if (!session) {
+            console.log(`No session found for user: ${senderId}`);
+            return;
+        }
+
+        const chatbot = await Chatbot.findById(session.chatbotId);
+        if (!chatbot) {
+            console.log(`No chatbot found for session`);
+            return;
+        }
+
+        const currentNode = chatbot.flow_json.nodes.find((n: any) => n.id === session.current_node_id);
+        if (!currentNode || currentNode.type !== 'quickReplyNode') {
+            console.log(`Current node is not a quickReplyNode or not found: ${session.current_node_id}`);
+            return;
+        }
+
+        // Find the index of the clicked reply - use case-insensitive comparison
+        const replyIndex = currentNode.data.replies.findIndex((r: any) => 
+            r.title.toUpperCase() === replyTitleFromPayload.toUpperCase()
+        );
+        if (replyIndex === -1) {
+            console.log(`Could not find reply index for title: ${replyTitleFromPayload}`);
+            console.log(`Available replies:`, currentNode.data.replies.map((r: any) => r.title));
+            return;
+        }
+
+        console.log(`Quick reply clicked: "${replyTitleFromPayload}" (index: ${replyIndex})`);
+        const sourceHandleId = `handle-${replyIndex}`;
+        console.log(`Looking for edge from node ${currentNode.id} with sourceHandle: ${sourceHandleId}`);
+        
+        // Find the next node connected to this specific handle
+        let nextNode = findNextNode(chatbot.flow_json, currentNode.id, sourceHandleId);
+
+        if (nextNode) {
+            console.log(`Found next node: ${nextNode.id} (${nextNode.type})`);
+            
+            // Handle loop node
+            if (nextNode.type === 'loopNode') {
+                const targetNodeId = nextNode.data.targetNodeId;
+                if (targetNodeId) {
+                    const targetNode = chatbot.flow_json.nodes.find((n: any) => n.id === targetNodeId);
+                    if (targetNode) {
+                        console.log(`Loop node redirecting to node ${targetNodeId}`);
+                        nextNode = targetNode;
+                    } else {
+                        console.log(`Loop target node ${targetNodeId} not found`);
+                        return;
+                    }
+                } else {
+                    console.log(`Loop node has no target configured`);
+                    return;
+                }
+            }
+            
+            await sendNodeMessage(senderId, nextNode, messengerAccount.accessToken);
+            session.current_node_id = nextNode.id;
+            await session.save();
+
+            if (nextNode.type === 'endNode') {
+                console.log(`End node reached for user ${senderId}. Conversation ended.`);
+                return;
+            }
+
+            while (nextNode && nextNode.type === 'messageNode') {
+                const followingNode = findNextNode(chatbot.flow_json, nextNode.id);
+                if (followingNode) {
+                    // Handle loop node in the flow
+                    if (followingNode.type === 'loopNode') {
+                        const targetNodeId = followingNode.data.targetNodeId;
+                        if (targetNodeId) {
+                            const targetNode = chatbot.flow_json.nodes.find((n: any) => n.id === targetNodeId);
+                            if (targetNode) {
+                                console.log(`Loop node redirecting to node ${targetNodeId}`);
+                                await sendNodeMessage(senderId, targetNode, messengerAccount.accessToken);
+                                session.current_node_id = targetNode.id;
+                                await session.save();
+                                nextNode = targetNode;
+                                continue;
+                            }
+                        }
+                        console.log(`Loop node configuration issue`);
+                        break;
+                    }
+                    
+                    await sendNodeMessage(senderId, followingNode, messengerAccount.accessToken);
+                    session.current_node_id = followingNode.id;
+                    await session.save();
+                    
+                    if (followingNode.type === 'endNode') {
+                        console.log(`End node reached for user ${senderId}. Conversation ended.`);
+                        return;
+                    }
+                    
+                    nextNode = followingNode;
+                } else {
+                    break;
+                }
+            }
+        } else {
+            console.log(`No next node found for edge from node ${currentNode.id} with sourceHandle ${sourceHandleId}.`);
+            console.log(`Available edges:`, JSON.stringify(chatbot.flow_json.edges));
+        }
+    } catch(error) {
+        console.error("Error processing quick reply:", error);
+    }
+}
 
 /**
  * Processes an incoming message event.
@@ -152,9 +309,33 @@ async function processMessage(event: any) {
     const nextNode = findNextNode(chatbot.flow_json, currentNodeId);
 
     if (nextNode) {
-      await sendNodeMessage(senderId, nextNode, messengerAccount.accessToken);
-      session.current_node_id = nextNode.id;
+      let nodeToSend = nextNode;
+      
+      // Handle loop node
+      if (nextNode.type === 'loopNode') {
+        const targetNodeId = nextNode.data.targetNodeId;
+        if (targetNodeId) {
+          const targetNode = chatbot.flow_json.nodes.find((n: any) => n.id === targetNodeId);
+          if (targetNode) {
+            console.log(`Loop node redirecting to node ${targetNodeId}`);
+            nodeToSend = targetNode;
+          } else {
+            console.log(`Loop target node ${targetNodeId} not found`);
+            return;
+          }
+        } else {
+          console.log(`Loop node has no target configured`);
+          return;
+        }
+      }
+      
+      await sendNodeMessage(senderId, nodeToSend, messengerAccount.accessToken);
+      session.current_node_id = nodeToSend.id;
       await session.save();
+      
+      if (nodeToSend.type === 'endNode') {
+        console.log(`End node reached for user ${senderId}. Conversation ended.`);
+      }
     } else {
       console.log(`End of flow reached for user ${senderId} at node ${currentNodeId}`);
     }
@@ -187,6 +368,11 @@ async function sendNodeMessage(psid: string, node: any, accessToken: string) {
         payload: `QUICK_REPLY_PAYLOAD_${reply.title.toUpperCase().replace(/ /g, '_')}`,
     }));
     await sendMessage(psid, { text: node.data.message, quick_replies: quickReplies }, accessToken);
+  } else if (node.type === 'endNode') {
+    await sendMessage(psid, { text: "Thank you for chatting with us! Feel free to send another message if you need more help." }, accessToken);
+  } else if (node.type === 'loopNode') {
+    // Loop nodes don't send messages themselves, they just redirect
+    console.log(`Loop node ${node.id} encountered - should not send message directly`);
   }
 }
 

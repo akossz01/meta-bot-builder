@@ -23,6 +23,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Save, Loader2 } from "lucide-react";
 import { FlowBuilderSidebar } from "@/components/dashboard/FlowBuilderSidebar";
 import { QuickReplyNode } from '@/components/dashboard/nodes/QuickReplyNode';
+import { EndNode } from '@/components/dashboard/nodes/EndNode';
+import { LoopNode } from '@/components/dashboard/nodes/LoopNode';
 
 // Custom Node for displaying and editing a message
 function MessageNode({ data }: NodeProps<{ message: string; onChange: (data: { message: string }) => void }>) {
@@ -59,10 +61,12 @@ export default function ChatbotBuilderPage() {
   const nodeTypes = useMemo(() => ({ 
     messageNode: MessageNode,
     quickReplyNode: QuickReplyNode,
+    endNode: EndNode,
+    loopNode: LoopNode,
   }), []);
 
   // Specific handler for updating node data
-  const updateNodeData = useCallback((nodeId: string, newData: Partial<{ message: string; replies: any[] }>) => {
+  const updateNodeData = useCallback((nodeId: string, newData: Partial<{ message: string; replies: any[]; targetNodeId: string }>) => {
     setNodes((nds) =>
       nds.map((node) => {
         if (node.id === nodeId) {
@@ -98,6 +102,14 @@ export default function ChatbotBuilderPage() {
         const data = await response.json();
         setChatbotName(data.name);
 
+        // Get available nodes for loop node dropdown
+        const availableNodes = data.flow_json.nodes
+          .filter((n: Node) => n.type !== 'loopNode' && n.type !== 'endNode')
+          .map((n: Node) => ({
+            id: n.id,
+            label: n.data.label || n.data.message?.substring(0, 20) || `Node ${n.id}`
+          }));
+
         // Prepare nodes with the onChange handler
         const initialNodes = data.flow_json.nodes.map((node: Node) => {
             if (node.type === 'messageNode') {
@@ -105,6 +117,10 @@ export default function ChatbotBuilderPage() {
             }
             if (node.type === 'quickReplyNode') {
                 node.data.onChange = (newData: object) => updateNodeData(node.id, newData);
+            }
+            if (node.type === 'loopNode') {
+                node.data.onChange = (newData: object) => updateNodeData(node.id, newData);
+                node.data.availableNodes = availableNodes;
             }
             return node;
         });
@@ -122,6 +138,25 @@ export default function ChatbotBuilderPage() {
 
     fetchChatbot();
   }, [chatbotId, router, updateNodeData]);
+
+  // Update available nodes whenever nodes change (for loop node dropdown)
+  useEffect(() => {
+    const availableNodes = nodes
+      .filter((n) => n.type !== 'loopNode' && n.type !== 'endNode')
+      .map((n) => ({
+        id: n.id,
+        label: n.data.label || n.data.message?.substring(0, 20) || `Node ${n.id}`
+      }));
+
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.type === 'loopNode') {
+          return { ...node, data: { ...node.data, availableNodes } };
+        }
+        return node;
+      })
+    );
+  }, [nodes.length]); // Only run when node count changes
   
   const handleSaveFlow = async () => {
     setIsSaving(true);
@@ -134,6 +169,10 @@ export default function ChatbotBuilderPage() {
                 cleanedData = { message: node.data.message };
             } else if (node.type === 'quickReplyNode') {
                 cleanedData = { message: node.data.message, replies: node.data.replies };
+            } else if (node.type === 'endNode') {
+                cleanedData = { label: node.data.label || 'End' };
+            } else if (node.type === 'loopNode') {
+                cleanedData = { targetNodeId: node.data.targetNodeId };
             } else {
                 // For other nodes like 'input'
                 cleanedData = { label: node.data.label };
@@ -194,6 +233,30 @@ export default function ChatbotBuilderPage() {
             type,
             position,
             data: { message: 'Ask a question', replies: [{title: 'Option 1'}], onChange: (data: object) => updateNodeData(newNodeId, data) },
+        };
+      } else if (type === 'endNode') {
+        newNode = {
+          id: newNodeId,
+          type,
+          position,
+          data: { label: 'End' },
+        };
+      } else if (type === 'loopNode') {
+        const availableNodes = nodes
+          .filter((n) => n.type !== 'loopNode' && n.type !== 'endNode')
+          .map((n) => ({
+            id: n.id,
+            label: n.data.label || n.data.message?.substring(0, 20) || `Node ${n.id}`
+          }));
+        newNode = {
+          id: newNodeId,
+          type,
+          position,
+          data: { 
+            targetNodeId: '', 
+            availableNodes,
+            onChange: (data: object) => updateNodeData(newNodeId, data) 
+          },
         };
       } else { // Default to messageNode
         newNode = {
