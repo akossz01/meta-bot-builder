@@ -101,17 +101,35 @@ async function processPostback(event: any) {
         const currentNode = chatbot.flow_json.nodes.find((n: any) => n.id === session.current_node_id);
         console.log('Current node:', currentNode ? `${currentNode.id} (${currentNode.type})` : 'not found');
 
-        // Handle carousel button postbacks
-        if (currentNode && currentNode.type === 'carouselNode' && payload.startsWith('CAROUSEL_CARD_')) {
+        // Handle carousel button postbacks - check for carousel payload regardless of current node
+        if (payload.startsWith('CAROUSEL_CARD_')) {
             const matches = payload.match(/CAROUSEL_CARD_(\d+)_BUTTON_(\d+)/);
             if (matches) {
                 const cardIndex = parseInt(matches[1]);
                 const buttonIndex = parseInt(matches[2]);
+                
+                // Find the carousel node in the flow (not necessarily the current node)
+                let carouselNode = null;
+                if (currentNode?.type === 'carouselNode') {
+                    carouselNode = currentNode;
+                } else {
+                    // Look for any carousel node in the flow that has edges
+                    carouselNode = chatbot.flow_json.nodes.find((n: any) => {
+                        if (n.type !== 'carouselNode') return false;
+                        // Check if this carousel has the button that was clicked
+                        return n.data.cards[cardIndex]?.buttons[buttonIndex]?.type === 'postback';
+                    });
+                }
+
+                if (!carouselNode) {
+                    console.log('No carousel node found for this postback');
+                    return;
+                }
+
                 const sourceHandleId = `card-${cardIndex}-button-${buttonIndex}`;
+                console.log(`Carousel card ${cardIndex} button ${buttonIndex} clicked, looking for handle: ${sourceHandleId}`);
 
-                console.log(`Carousel card ${cardIndex} button ${buttonIndex} clicked`);
-
-                let nextNode = findNextNode(chatbot.flow_json, currentNode.id, sourceHandleId);
+                let nextNode = findNextNode(chatbot.flow_json, carouselNode.id, sourceHandleId);
 
                 if (nextNode) {
                     console.log(`Found next node: ${nextNode.id} (${nextNode.type})`);
@@ -140,15 +158,31 @@ async function processPostback(event: any) {
             return;
         }
 
-        // Handle card button postbacks
-        if (currentNode && currentNode.type === 'cardNode' && payload.startsWith('CARD_BUTTON_')) {
+        // Handle card button postbacks - check for card payload regardless of current node
+        if (payload.startsWith('CARD_BUTTON_')) {
             const buttonIndex = parseInt(payload.replace('CARD_BUTTON_', ''));
+            
+            // Find the card node in the flow
+            let cardNode = null;
+            if (currentNode?.type === 'cardNode') {
+                cardNode = currentNode;
+            } else {
+                // Look for any card node in the flow
+                cardNode = chatbot.flow_json.nodes.find((n: any) => {
+                    if (n.type !== 'cardNode') return false;
+                    return n.data.buttons[buttonIndex]?.type === 'postback';
+                });
+            }
+
+            if (!cardNode) {
+                console.log('No card node found for this postback');
+                return;
+            }
+
             const sourceHandleId = `button-${buttonIndex}`;
-
             console.log(`Card button ${buttonIndex} clicked, looking for handle: ${sourceHandleId}`);
-            console.log('Current node buttons:', JSON.stringify(currentNode.data.buttons));
 
-            let nextNode = findNextNode(chatbot.flow_json, currentNode.id, sourceHandleId);
+            let nextNode = findNextNode(chatbot.flow_json, cardNode.id, sourceHandleId);
 
             if (nextNode) {
                 console.log(`Found next node: ${nextNode.id} (${nextNode.type})`);
@@ -172,7 +206,6 @@ async function processPostback(event: any) {
                 }
             } else {
                 console.log(`No next node found for handle: ${sourceHandleId}`);
-                console.log('Available edges:', JSON.stringify(chatbot.flow_json.edges));
             }
             return;
         }
@@ -496,7 +529,7 @@ async function sendNodeMessage(psid: string, node: any, accessToken: string) {
             }, accessToken);
         }
     } else if (node.type === 'carouselNode') {
-        const elements = node.data.cards.map((card: any) => {
+        const elements = node.data.cards.map((card: any, cardIndex: number) => {
             const element: any = {
                 title: card.title,
             };
@@ -510,7 +543,7 @@ async function sendNodeMessage(psid: string, node: any, accessToken: string) {
             }
 
             if (card.buttons && card.buttons.length > 0) {
-                element.buttons = card.buttons.map((btn: any, cardIndex: number, btnIndex: number) => {
+                element.buttons = card.buttons.map((btn: any, btnIndex: number) => {
                     if (btn.type === 'web_url') {
                         return {
                             type: 'web_url',
@@ -518,6 +551,7 @@ async function sendNodeMessage(psid: string, node: any, accessToken: string) {
                             title: btn.title,
                         };
                     } else {
+                        // Use the same format as the handle IDs
                         return {
                             type: 'postback',
                             title: btn.title,

@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useState } from 'react';
+import React from 'react';
 
 // Color palette for nodes
 const NODE_COLORS = [
@@ -128,10 +129,32 @@ export function CarouselNode({ data, id }: NodeProps<CarouselNodeData>) {
     }
   };
 
-  // Calculate handle positions for all postback buttons across all cards
-  const handleBaseTop = 450; // Adjusted base position
-  const handleSpacing = 100;
-  let handleOffset = 0;
+  // Calculate ALL postback button handles across ALL cards
+  const allPostbackHandles: Array<{
+    cardIndex: number;
+    buttonIndex: number;
+    cardTitle: string;
+    buttonTitle: string;
+  }> = [];
+
+  cards.forEach((card, cardIndex) => {
+    card.buttons.forEach((button, buttonIndex) => {
+      if (button.type === 'postback') {
+        allPostbackHandles.push({
+          cardIndex,
+          buttonIndex,
+          cardTitle: card.title || `Card ${cardIndex + 1}`,
+          buttonTitle: button.title || `Button ${buttonIndex + 1}`,
+        });
+      }
+    });
+  });
+
+  // Calculate base position for first button handle - matching CardNode pattern
+  const handleBaseTop = 380; // Adjusted to align with content
+  const handleSpacing = 45; // Spacing between handles
+  const minNodeHeight = 520; // Minimum node height
+  const dynamicHeight = handleBaseTop + (allPostbackHandles.length * handleSpacing) + 80;
 
   return (
     <div 
@@ -139,6 +162,7 @@ export function CarouselNode({ data, id }: NodeProps<CarouselNodeData>) {
       style={{ 
         ...(color && { backgroundColor: color }),
         borderColor: displayBorderColor,
+        minHeight: `${Math.max(minNodeHeight, dynamicHeight)}px`
       }}
     >
       <Handle type="target" position={Position.Top} className="w-3 h-3 !bg-primary" />
@@ -331,25 +355,57 @@ export function CarouselNode({ data, id }: NodeProps<CarouselNodeData>) {
         )}
       </div>
 
-      {/* Source handles for postback buttons across all cards */}
-      {cards.map((card, cardIndex) => {
-        return card.buttons.map((button, buttonIndex) => {
-          if (button.type === 'postback') {
-            const handle = (
-              <Handle 
-                key={`card-${cardIndex}-button-${buttonIndex}`}
-                type="source" 
-                position={Position.Right} 
-                id={`card-${cardIndex}-button-${buttonIndex}`}
-                style={{ top: `${handleBaseTop + handleOffset * handleSpacing}px` }} 
-                className="w-3 h-3 !bg-primary"
-              />
-            );
-            handleOffset++;
-            return handle;
-          }
-          return null;
-        });
+      {/* Render ALL postback button handles from ALL cards */}
+      {allPostbackHandles.map((handle, index) => {
+        const isCurrentCard = handle.cardIndex === currentCardIndex;
+        const isCurrentButton = isCurrentCard && 
+          currentCard.buttons[handle.buttonIndex]?.type === 'postback';
+        const topPosition = handleBaseTop + (index * handleSpacing);
+        
+        return (
+          <React.Fragment key={`handle-${handle.cardIndex}-${handle.buttonIndex}`}>
+            {/* Label for the handle */}
+            <div 
+              className={`absolute text-xs whitespace-nowrap px-2 py-1 rounded-l border-l border-t border-b ${
+                isCurrentButton
+                  ? 'bg-primary/20 border-primary text-primary font-semibold' 
+                  : isCurrentCard
+                  ? 'bg-primary/10 border-primary/50 text-primary/80 font-medium'
+                  : 'bg-muted/50 border-border text-muted-foreground'
+              }`}
+              style={{ 
+                top: `${topPosition - 11}px`,
+                right: '20px',
+                pointerEvents: 'none',
+                zIndex: 1,
+                fontSize: '11px'
+              }}
+            >
+              <span className="font-mono">C{handle.cardIndex + 1}B{handle.buttonIndex + 1}</span>
+              {isCurrentButton && <span className="ml-1">←</span>}
+            </div>
+            
+            {/* The actual handle */}
+            <Handle 
+              type="source" 
+              position={Position.Right} 
+              id={`card-${handle.cardIndex}-button-${handle.buttonIndex}`}
+              className={`${
+                isCurrentButton
+                  ? '!bg-primary ring-4 ring-primary/40 scale-110' 
+                  : '!bg-muted-foreground hover:!bg-primary/70 transition-colors'
+              }`}
+              style={{ 
+                top: `${topPosition}px`,
+                right: '-8px',
+                width: '14px',
+                height: '14px',
+                border: '2px solid hsl(var(--background))',
+                transition: 'all 0.2s ease'
+              }}
+            />
+          </React.Fragment>
+        );
       })}
       
       {/* Default output handle at bottom */}
