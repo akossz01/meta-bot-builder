@@ -29,6 +29,7 @@ export interface IChatbot extends Document {
   accountId: Types.ObjectId;
   flow_json: object;
   userId: Types.ObjectId;
+  isActive: boolean;
 }
 
 const ChatbotSchema: Schema = new Schema(
@@ -49,6 +50,10 @@ const ChatbotSchema: Schema = new Schema(
     userId: {
       type: Schema.Types.ObjectId,
       ref: "User",
+      required: true,
+    },
+    isActive: {
+      type: Boolean,
       required: true,
     },
   },

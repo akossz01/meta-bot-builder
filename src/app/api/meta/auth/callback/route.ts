@@ -44,6 +44,29 @@ async function getUserPages(longLivedUserToken: string) {
 }
 
 /**
+ * Subscribes the app to a page's webhook events (e.g., messages).
+ * This is a crucial step to make the webhook functional for a specific page.
+ */
+async function subscribeAppToPage(pageAccessToken: string, pageId: string) {
+  const url = `https://graph.facebook.com/v20.0/${pageId}/subscribed_apps`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      access_token: pageAccessToken,
+      subscribed_fields: ['messages'], // Subscribe to the messages field
+    }),
+  });
+  const data = await response.json();
+  if (!data.success) {
+    throw new Error(`Failed to subscribe app to page ${pageId}: ${JSON.stringify(data.error)}`);
+  }
+  console.log(`Successfully subscribed app to page ${pageId}`);
+}
+
+/**
  * Handles the callback from Facebook's OAuth flow.
  * It receives an authorization `code` that can be exchanged for an access token.
  */
@@ -86,6 +109,9 @@ export async function GET(req: NextRequest) {
     // 4. Loop through all pages returned by the API
     const operations = pages.map((page: any) => {
       const { name, access_token: pageAccessToken, id: pageId } = page;
+
+      // Subscribe the app to this page's webhook events
+      subscribeAppToPage(pageAccessToken, pageId);
 
       // 5. Create or update an entry for each page in the database
       // TODO: Encryption should be added for production. For now, we store it directly.

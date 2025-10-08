@@ -45,8 +45,16 @@ export async function POST(req: NextRequest) {
         if (!messengerAccount) {
             return NextResponse.json({ message: "Account not found or access denied." }, { status: 404 });
         }
-    
-        const newChatbot = new Chatbot({ name, accountId, userId });
+
+        // Check if another active bot exists for this account
+        const existingActiveBot = await Chatbot.findOne({ accountId, userId, isActive: true });
+
+        const newChatbot = new Chatbot({
+            name,
+            accountId,
+            userId,
+            isActive: !existingActiveBot, // Set to true only if no other bot is active
+        });
         await newChatbot.save();
     
         return NextResponse.json(newChatbot, { status: 201 });
