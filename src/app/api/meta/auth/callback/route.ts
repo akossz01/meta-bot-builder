@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import connectToDatabase from "@/lib/mongodb";
-import User from "@/models/User";
 import MessengerAccount from "@/models/MessengerAccount";
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
@@ -20,26 +19,28 @@ async function exchangeCodeForToken(code: string) {
 }
 
 async function getLongLivedUserToken(shortLivedToken: string) {
-    const url = new URL("https://graph.facebook.com/v20.0/oauth/access_token");
-    url.searchParams.set("grant_type", "fb_exchange_token");
-    url.searchParams.set("client_id", process.env.META_APP_ID!);
-    url.searchParams.set("client_secret", process.env.META_APP_SECRET!);
-    url.searchParams.set("fb_exchange_token", shortLivedToken);
+  const url = new URL("https://graph.facebook.com/v20.0/oauth/access_token");
+  url.searchParams.set("grant_type", "fb_exchange_token");
+  url.searchParams.set("client_id", process.env.META_APP_ID!);
+  url.searchParams.set("client_secret", process.env.META_APP_SECRET!);
+  url.searchParams.set("fb_exchange_token", shortLivedToken);
 
-    const response = await fetch(url.toString());
-    const data = await response.json();
-    if (data.error) throw new Error(data.error.message);
-    return data.access_token;
+  const response = await fetch(url.toString());
+  const data = await response.json();
+  if (data.error) throw new Error(data.error.message);
+  return data.access_token;
 }
 
 async function getUserPages(longLivedUserToken: string) {
-    const url = new URL("https://graph.facebook.com/v20.0/me/accounts");
-    url.searchParams.set("access_token", longLivedUserToken);
-    
-    const response = await fetch(url.toString());
-    const data = await response.json();
-    if (data.error) throw new Error(data.error.message);
-    return data.data; // This is an array of pages
+  const url = new URL("https://graph.facebook.com/v20.0/me/accounts");
+  url.searchParams.set("access_token", longLivedUserToken);
+  // Request the fields we need for each page
+  url.searchParams.set("fields", "id,name,access_token"); 
+
+  const response = await fetch(url.toString());
+  const data = await response.json();
+  if (data.error) throw new Error(data.error.message);
+  return data.data; // This is an array of pages
 }
 
 /**
@@ -66,7 +67,7 @@ export async function GET(req: NextRequest) {
     if (!code) {
       throw new Error("Authorization code not found.");
     }
-    
+
     await connectToDatabase();
 
     // 1. Exchange code for a short-lived user access token
@@ -82,28 +83,30 @@ export async function GET(req: NextRequest) {
       throw new Error("No Facebook pages found for this user.");
     }
 
-    // 4. For this MVP, we'll save the first page found.
-    // A full implementation would let the user choose which page to connect.
-    const pageToConnect = pages[0];
-    const { name, access_token: pageAccessToken, id: pageId } = pageToConnect;
+    // 4. Loop through all pages returned by the API
+    const operations = pages.map((page: any) => {
+      const { name, access_token: pageAccessToken, id: pageId } = page;
 
-    // 5. Encrypt and save the Page Access Token to the database
-    // TODO: Encryption should be added for production. For now, we store it directly.
-    await MessengerAccount.findOneAndUpdate(
+      // 5. Create or update an entry for each page in the database
+      // TODO: Encryption should be added for production. For now, we store it directly.
+      return MessengerAccount.findOneAndUpdate(
         { accountId: pageId, userId },
         {
-            userId,
-            accountId: pageId,
-            accountName: name,
-            accessToken: pageAccessToken,
-            accountType: "messenger"
+          userId,
+          accountId: pageId,
+          accountName: name,
+          accessToken: pageAccessToken,
+          accountType: "messenger",
         },
         { upsert: true, new: true }
-    );
+      );
+    });
+
+    // Execute all database operations
+    await Promise.all(operations);
 
     redirectUrl.searchParams.set("success", "facebook_connected");
     return NextResponse.redirect(redirectUrl);
-
   } catch (error: any) {
     console.error("Facebook auth callback error:", error.message);
     redirectUrl.searchParams.set("error", "oauth_failed");

@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 
-// Placeholder for the start of the OAuth flow
 export async function GET() {
   const appId = process.env.META_APP_ID;
   const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/meta/auth/callback`;
@@ -24,6 +23,7 @@ export async function GET() {
   authUrl.searchParams.set("scope", scope);
   authUrl.searchParams.set("response_type", "code");
   authUrl.searchParams.set("state", state);
+  authUrl.searchParams.set("auth_type", "reauthorize"); // Force re-authorization dialog
 
   return NextResponse.redirect(authUrl.toString());
 }
