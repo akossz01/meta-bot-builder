@@ -253,6 +253,16 @@ export default function ChatbotBuilderPage() {
   const handleSaveFlow = async () => {
     setIsSaving(true);
     try {
+        // Validate for duplicate node IDs before saving
+        const nodeIds = nodes.map(n => n.id);
+        const uniqueIds = new Set(nodeIds);
+        if (nodeIds.length !== uniqueIds.size) {
+            const duplicates = nodeIds.filter((id, index) => nodeIds.indexOf(id) !== index);
+            console.error('Duplicate node IDs found:', duplicates);
+            alert(`Error: Duplicate node IDs detected (${duplicates.join(', ')}). Please refresh the page and try again.`);
+            return;
+        }
+
         // Strip functions AND any non-standard properties from node data before saving
         const cleanedNodes = nodes.map(node => {
             let cleanedData: any;
@@ -316,6 +326,7 @@ export default function ChatbotBuilderPage() {
         // Add a toast notification here in a real app
     } catch (error) {
         console.error("Failed to save flow", error);
+        alert('Failed to save flow. Please try again.');
     } finally {
         setIsSaving(false);
     }
@@ -335,7 +346,6 @@ export default function ChatbotBuilderPage() {
       const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
       const type = event.dataTransfer.getData('application/reactflow');
 
-      // check if the dropped element is valid
       if (typeof type === 'undefined' || !type) {
         return;
       }
@@ -344,7 +354,12 @@ export default function ChatbotBuilderPage() {
         x: event.clientX - reactFlowBounds.left,
         y: event.clientY - reactFlowBounds.top,
       });
-      const newNodeId = (nodes.length + 1).toString();
+      
+      // Generate a unique ID by finding the highest existing ID and adding 1
+      const existingIds = nodes.map(n => parseInt(n.id)).filter(id => !isNaN(id));
+      const maxId = existingIds.length > 0 ? Math.max(...existingIds) : 0;
+      const newNodeId = (maxId + 1).toString();
+      
       let newNode: Node;
 
       if (type === 'cardNode') {

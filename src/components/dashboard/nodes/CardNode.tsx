@@ -60,6 +60,9 @@ export function CardNode({ data, id }: NodeProps<CardNodeData>) {
 
   const handleBaseTop = 200;
   const handleSpacing = 60;
+  
+  // Check if there are any postback buttons
+  const hasPostbackButtons = buttons.some(btn => btn.type === 'postback');
 
   return (
     <div 
@@ -234,6 +237,14 @@ export function CardNode({ data, id }: NodeProps<CardNodeData>) {
         }
         return null;
       })}
+      
+      {/* Default output handle at bottom - always visible */}
+      <Handle 
+        type="source" 
+        position={Position.Bottom} 
+        id="default-output"
+        className="w-3 h-3 !bg-primary" 
+      />
     </div>
   );
 }

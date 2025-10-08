@@ -1,19 +1,33 @@
 {
     "Index": {
       "brandName": "ChatFlow AI",
-      "navFeatures": "Funkciók",
-      "navPricing": "Árak",
-      "heroTitle": "Építsen Intelligensebb Chatbotokat Messengerre és WhatsAppra",
-      "heroDescription": "Vonja be ügyfeleit, automatizálja a támogatást és generáljon leadeket intuitív, kód nélküli vizuális chatbot-építőnkkel. MI alapokon.",
-      "getStarted": "Kezdje Ingyen",
-      "login": "Bejelentkezés",
-      "featuresTitle": "Minden, Amire a Sikerhez Szüksége Van",
-      "feature1Title": "Vizuális Folyamatépítő",
-      "feature1Desc": "Tervezzen összetett chatbot-beszélgetéseket egy egyszerű fogd és vidd felülettel. Nincs szükség kódolásra.",
-      "feature2Title": "MI Tudásügynök",
-      "feature2Desc": "Tanítsa be chatbotját saját adataival, hogy pontosan és azonnal válaszoljon az ügyfelek kérdéseire.",
-      "feature3Title": "Többplatformos Támogatás",
-      "feature3Desc": "Telepítse chatbotjait zökkenőmentesen a Facebook Messengerre és a WhatsAppra is egyetlen platformról."
+      "nav": {
+        "features": "Funkciók",
+        "pricing": "Árak",
+        "login": "Bejelentkezés"
+      },
+      "hero": {
+        "title": "Építsen Intelligensebb Chatbotokat Messengerre és WhatsAppra",
+        "description": "Vonja be ügyfeleit, automatizálja a támogatást és generáljon leadeket intuitív, kód nélküli vizuális chatbot-építőnkkel. MI alapokon.",
+        "cta": "Kezdje Ingyen"
+      },
+      "features": {
+        "title": "Minden, Amire az Intelligensebb Beszélgetésekhez Szüksége Van",
+        "f1Title": "Vizuális Folyamatépítő",
+        "f1Desc": "Tervezzen összetett chatbot-beszélgetéseket egy egyszerű fogd és vidd felülettel. Nincs szükség kódolásra.",
+        "f2Title": "MI Tudásügynök",
+        "f2Desc": "Tanítsa be chatbotját saját adataival, hogy pontosan és azonnal válaszoljon az ügyfelek kérdéseire.",
+        "f3Title": "Többplatformos Támogatás",
+        "f3Desc": "Telepítse chatbotjait zökkenőmentesen a Facebook Messengerre és a WhatsAppra is egyetlen platformról."
+      },
+      "cta": {
+        "title": "Készen Áll az Ügyfélkapcsolat Automatizálására?",
+        "description": "Regisztráljon még ma, és percek alatt elkezdheti építeni első MI chatbotját.",
+        "cta": "Kezdje el az Építést Most"
+      },
+      "footer": {
+        "copyright": "Minden jog fenntartva."
+      }
     },
     "Auth": {
       "loginTitle": "Üdvözöljük újra",
@@ -36,7 +50,8 @@
       "logout": "Kijelentkezés",
       "navDashboard": "Vezérlőpult",
       "navConnections": "Kapcsolatok",
-      "navSettings": "Beállítások"
+      "navSettings": "Beállítások",
+      "brandName": "ChatFlow AI"
     },
     "Connections": {
       "title": "Kapcsolatok Kezelése",

@@ -226,6 +226,7 @@ async function processQuickReply(event: any) {
         console.log(`Quick reply clicked: "${replyTitleFromPayload}" (index: ${replyIndex})`);
         const sourceHandleId = `handle-${replyIndex}`;
         console.log(`Looking for edge from node ${currentNode.id} with sourceHandle: ${sourceHandleId}`);
+        console.log(`All edges:`, JSON.stringify(chatbot.flow_json.edges, null, 2));
         
         // Find the next node connected to this specific handle
         let nextNode = findNextNode(chatbot.flow_json, currentNode.id, sourceHandleId);
@@ -264,7 +265,11 @@ async function processQuickReply(event: any) {
             await autoContinueFlow(chatbot.flow_json, nextNode, senderId, session, messengerAccount.accessToken);
         } else {
             console.log(`No next node found for edge from node ${currentNode.id} with sourceHandle ${sourceHandleId}.`);
-            console.log(`Available edges:`, JSON.stringify(chatbot.flow_json.edges));
+            console.log(`This quick reply option has no connected path. Conversation paused.`);
+            // Send a fallback message
+            await sendMessage(senderId, { 
+                text: "Sorry, this option is not configured yet. Please try another option or send a new message." 
+            }, messengerAccount.accessToken);
         }
     } catch(error) {
         console.error("Error processing quick reply:", error);
@@ -415,7 +420,6 @@ async function sendNodeMessage(psid: string, node: any, accessToken: string) {
       },
     }, accessToken);
   } else if (node.type === 'endNode') {
-    // Check if we should send a message
     if (node.data.sendMessage !== false && node.data.message) {
       await sendMessage(psid, { text: node.data.message }, accessToken);
     } else {
@@ -461,9 +465,30 @@ async function sendMessage(psid: string, messagePayload: object, accessToken: st
 async function autoContinueFlow(flow: any, currentNode: any, senderId: string, session: any, accessToken: string) {
     let node = currentNode;
     
-    console.log(`Starting autoContinueFlow from node ${node.id}, type: ${node.type}, waitForReply: ${node.data.waitForReply}`);
+    console.log(`Starting autoContinueFlow from node ${node.id}, type: ${node.type}`);
     
     while (node) {
+        // For card nodes, check if they have only web_url buttons (no postback buttons)
+        // If so, auto-continue through the default-output
+        if (node.type === 'cardNode') {
+            const hasPostbackButtons = node.data.buttons?.some((btn: any) => btn.type === 'postback');
+            if (!hasPostbackButtons) {
+                // No postback buttons, so auto-continue via default-output
+                console.log(`Card node ${node.id} has no postback buttons, auto-continuing via default-output`);
+                const nextNode = findNextNode(flow, node.id, 'default-output');
+                if (nextNode) {
+                    await sendNodeMessage(senderId, nextNode, accessToken);
+                    session.current_node_id = nextNode.id;
+                    await session.save();
+                    node = nextNode;
+                    continue;
+                }
+            }
+            // Card has postback buttons, wait for user to click
+            console.log(`Card node ${node.id} has postback buttons, waiting for user interaction`);
+            break;
+        }
+
         // Check if we should wait for reply (default to true if undefined)
         const shouldWait = node.data.waitForReply !== false;
         
@@ -501,7 +526,7 @@ async function autoContinueFlow(flow: any, currentNode: any, senderId: string, s
             }
         }
 
-        console.log(`Auto-continuing to node ${nodeToSend.id} (type: ${nodeToSend.type}, waitForReply: ${nodeToSend.data.waitForReply})`);
+        console.log(`Auto-continuing to node ${nodeToSend.id} (type: ${nodeToSend.type})`);
         
         // Send the message
         await sendNodeMessage(senderId, nodeToSend, accessToken);
