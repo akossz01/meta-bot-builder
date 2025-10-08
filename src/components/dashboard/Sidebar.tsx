@@ -9,6 +9,7 @@ import {
   Settings,
   Link2,
   Loader2,
+  BotMessageSquare, // Added import
   ChevronLeft,
 } from "lucide-react";
 
@@ -25,6 +26,7 @@ export function Sidebar() {
   const navItems = [
     { href: "/dashboard", icon: LayoutDashboard, label: t("navDashboard") },
     { href: "/dashboard/connections", icon: Link2, label: t("navConnections") },
+    { href: "/dashboard/chatbots", icon: BotMessageSquare, label: "Chatbots" }, // Added "Chatbots"
     { href: "/dashboard/settings", icon: Settings, label: t("navSettings") },
   ];
 
