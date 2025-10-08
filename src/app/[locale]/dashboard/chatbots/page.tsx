@@ -28,7 +28,7 @@ import {
 
 // Types
 type ConnectedAccount = { _id: string; accountId: string; accountName: string; };
-type Chatbot = { _id: string; name: string; accountId: { accountName: string, accountId: string } };
+type Chatbot = { _id: string; name: string; isActive: boolean; accountId: { accountName: string, accountId: string } };
 
 export default function ChatbotsPage() {
   const router = useRouter();
@@ -39,6 +39,7 @@ export default function ChatbotsPage() {
   const [newBotName, setNewBotName] = useState("");
   const [selectedAccount, setSelectedAccount] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [activatingId, setActivatingId] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -88,6 +89,28 @@ export default function ChatbotsPage() {
     }
   };
 
+  const handleActivateBot = async (botId: string) => {
+    setActivatingId(botId);
+    try {
+      const res = await fetch(`/api/chatbots/${botId}/activate`, { method: 'PUT' });
+      if (!res.ok) throw new Error("Failed to activate bot.");
+
+      // Update UI state to reflect activation
+      setChatbots(currentBots => 
+        currentBots.map(bot => {
+          const botToActivate = currentBots.find(b => b._id === botId);
+          if (bot.accountId.accountId === botToActivate?.accountId.accountId) {
+            return { ...bot, isActive: bot._id === botId };
+          }
+          return bot;
+        })
+      );
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setActivatingId(null);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-8">
@@ -148,17 +171,31 @@ export default function ChatbotsPage() {
       ) : chatbots.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {chatbots.map((bot) => (
-            <Link key={bot._id} href={`/dashboard/chatbots/${bot._id}`}>
-              <Card className="hover:bg-muted/50 transition-colors">
-                <CardHeader className="flex-row items-center gap-4">
-                    <Bot className="h-8 w-8 text-primary" />
+            <Card key={bot._id} className="flex flex-col">
+              <Link href={`/dashboard/chatbots/${bot._id}`} className="block hover:bg-muted/50 transition-colors rounded-t-xl flex-1">
+                <CardHeader className="flex-row items-start gap-4">
+                    <Bot className="h-8 w-8 text-primary mt-1" />
                     <div>
                         <CardTitle>{bot.name}</CardTitle>
                         <p className="text-sm text-muted-foreground">{bot.accountId.accountName}</p>
                     </div>
                 </CardHeader>
-              </Card>
-            </Link>
+              </Link>
+              <CardContent className="mt-auto p-4 border-t flex items-center justify-between">
+                <div className={`flex items-center gap-2 text-sm font-medium ${bot.isActive ? 'text-green-600' : 'text-muted-foreground'}`}>
+                  <span className={`h-2 w-2 rounded-full ${bot.isActive ? 'bg-green-500' : 'bg-gray-400'}`}></span>
+                  {bot.isActive ? 'Active' : 'Inactive'}
+                </div>
+                {!bot.isActive && (
+                  <Button variant="outline" size="sm" onClick={() => handleActivateBot(bot._id)} disabled={activatingId === bot._id}>
+                    {activatingId === bot._id ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : null}
+                    Activate
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
           ))}
         </div>
       ) : (

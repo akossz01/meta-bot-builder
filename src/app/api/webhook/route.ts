@@ -81,6 +81,7 @@ async function processMessage(event: any) {
 
     // Find the active chatbot for this account
     const chatbot = await Chatbot.findOne({ accountId: messengerAccount._id, isActive: true });
+    
     if (!chatbot) {
       console.log(`No active chatbot found for account: ${messengerAccount.accountName}`);
       return;

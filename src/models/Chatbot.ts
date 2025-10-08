@@ -55,6 +55,7 @@ const ChatbotSchema: Schema = new Schema(
     isActive: {
       type: Boolean,
       required: true,
+      default: false,
     },
   },
   {
