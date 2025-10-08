@@ -225,41 +225,8 @@ async function processQuickReply(event: any) {
                 return;
             }
 
-            while (nextNode && nextNode.type === 'messageNode') {
-                const followingNode = findNextNode(chatbot.flow_json, nextNode.id);
-                if (followingNode) {
-                    // Handle loop node in the flow
-                    if (followingNode.type === 'loopNode') {
-                        const targetNodeId = followingNode.data.targetNodeId;
-                        if (targetNodeId) {
-                            const targetNode = chatbot.flow_json.nodes.find((n: any) => n.id === targetNodeId);
-                            if (targetNode) {
-                                console.log(`Loop node redirecting to node ${targetNodeId}`);
-                                await sendNodeMessage(senderId, targetNode, messengerAccount.accessToken);
-                                session.current_node_id = targetNode.id;
-                                await session.save();
-                                nextNode = targetNode;
-                                continue;
-                            }
-                        }
-                        console.log(`Loop node configuration issue`);
-                        break;
-                    }
-                    
-                    await sendNodeMessage(senderId, followingNode, messengerAccount.accessToken);
-                    session.current_node_id = followingNode.id;
-                    await session.save();
-                    
-                    if (followingNode.type === 'endNode') {
-                        console.log(`End node reached for user ${senderId}. Conversation ended.`);
-                        return;
-                    }
-                    
-                    nextNode = followingNode;
-                } else {
-                    break;
-                }
-            }
+            // Auto-continue if waitForReply is false OR if it's a messageNode
+            await autoContinueFlow(chatbot.flow_json, nextNode, senderId, session, messengerAccount.accessToken);
         } else {
             console.log(`No next node found for edge from node ${currentNode.id} with sourceHandle ${sourceHandleId}.`);
             console.log(`Available edges:`, JSON.stringify(chatbot.flow_json.edges));
@@ -335,7 +302,11 @@ async function processMessage(event: any) {
       
       if (nodeToSend.type === 'endNode') {
         console.log(`End node reached for user ${senderId}. Conversation ended.`);
+        return;
       }
+
+      // Auto-continue if waitForReply is false
+      await autoContinueFlow(chatbot.flow_json, nodeToSend, senderId, session, messengerAccount.accessToken);
     } else {
       console.log(`End of flow reached for user ${senderId} at node ${currentNodeId}`);
     }
@@ -402,4 +373,62 @@ async function sendMessage(psid: string, messagePayload: object, accessToken: st
   } catch (error) {
     console.error("Failed to send message:", error);
   }
+}
+
+/**
+ * Auto-continues the flow when waitForReply is false.
+ * Keeps sending messages until it hits a node that waits for reply or the end.
+ */
+async function autoContinueFlow(flow: any, currentNode: any, senderId: string, session: any, accessToken: string) {
+    let node = currentNode;
+    
+    while (node) {
+        // Check if we should wait for reply
+        const shouldWait = node.data.waitForReply !== false;
+        
+        // Stop if this node waits for reply, is a quick reply, or is an end node
+        if (shouldWait || node.type === 'quickReplyNode' || node.type === 'endNode') {
+            break;
+        }
+
+        // Find the next node
+        const nextNode = findNextNode(flow, node.id);
+        if (!nextNode) {
+            console.log(`End of auto-continue flow at node ${node.id}`);
+            break;
+        }
+
+        // Handle loop nodes
+        let nodeToSend = nextNode;
+        if (nextNode.type === 'loopNode') {
+            const targetNodeId = nextNode.data.targetNodeId;
+            if (targetNodeId) {
+                const targetNode = flow.nodes.find((n: any) => n.id === targetNodeId);
+                if (targetNode) {
+                    console.log(`Auto-continue: Loop node redirecting to node ${targetNodeId}`);
+                    nodeToSend = targetNode;
+                } else {
+                    console.log(`Auto-continue: Loop target node ${targetNodeId} not found`);
+                    break;
+                }
+            } else {
+                console.log(`Auto-continue: Loop node has no target configured`);
+                break;
+            }
+        }
+
+        console.log(`Auto-continuing to node ${nodeToSend.id} (waitForReply: ${nodeToSend.data.waitForReply !== false})`);
+        
+        // Send the message
+        await sendNodeMessage(senderId, nodeToSend, accessToken);
+        session.current_node_id = nodeToSend.id;
+        await session.save();
+
+        if (nodeToSend.type === 'endNode') {
+            console.log(`Auto-continue: End node reached`);
+            break;
+        }
+
+        node = nodeToSend;
+    }
 }

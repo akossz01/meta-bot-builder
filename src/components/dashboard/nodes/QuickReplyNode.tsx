@@ -3,16 +3,19 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { PlusCircle, X } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 // Define the shape of our data for this node
 type QuickReplyData = {
   message: string;
   replies: Array<{ title: string }>;
+  waitForReply?: boolean;
   onChange: (data: Partial<QuickReplyData>) => void;
 };
 
 export function QuickReplyNode({ data, id }: NodeProps<QuickReplyData>) {
-  const { message, replies, onChange } = data;
+  const { message, replies, waitForReply, onChange } = data;
 
   const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     onChange({ message: e.target.value });
@@ -77,6 +80,17 @@ export function QuickReplyNode({ data, id }: NodeProps<QuickReplyData>) {
             <PlusCircle className="h-4 w-4 mr-2" />
             Add Reply
           </Button>
+        </div>
+        <div className="flex items-center justify-between pt-2 border-t">
+          <Label htmlFor={`wait-${id}`} className="text-xs cursor-pointer">
+            Wait for reply
+          </Label>
+          <Switch
+            id={`wait-${id}`}
+            checked={waitForReply !== false}
+            onCheckedChange={(checked) => onChange({ waitForReply: checked })}
+            className="nodrag"
+          />
         </div>
       </div>
 

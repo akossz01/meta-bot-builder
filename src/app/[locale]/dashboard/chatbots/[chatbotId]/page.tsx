@@ -25,9 +25,11 @@ import { FlowBuilderSidebar } from "@/components/dashboard/FlowBuilderSidebar";
 import { QuickReplyNode } from '@/components/dashboard/nodes/QuickReplyNode';
 import { EndNode } from '@/components/dashboard/nodes/EndNode';
 import { LoopNode } from '@/components/dashboard/nodes/LoopNode';
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 // Custom Node for displaying and editing a message
-function MessageNode({ data }: NodeProps<{ message: string; onChange: (data: { message: string }) => void }>) {
+function MessageNode({ data }: NodeProps<{ message: string; waitForReply?: boolean; onChange: (data: { message?: string; waitForReply?: boolean }) => void }>) {
   return (
     <div className="p-4 border-2 bg-background rounded-lg shadow-md w-64">
       <Handle type="target" position={Position.Top} className="w-2 h-2" />
@@ -38,6 +40,17 @@ function MessageNode({ data }: NodeProps<{ message: string; onChange: (data: { m
           onChange={(e) => data.onChange({ message: e.target.value })}
           className="nodrag" // Prevents dragging the node when interacting with the textarea
         />
+        <div className="flex items-center justify-between pt-2 border-t">
+          <Label htmlFor={`wait-${data.message}`} className="text-xs cursor-pointer">
+            Wait for reply
+          </Label>
+          <Switch
+            id={`wait-${data.message}`}
+            checked={data.waitForReply !== false}
+            onCheckedChange={(checked) => data.onChange({ waitForReply: checked })}
+            className="nodrag"
+          />
+        </div>
       </div>
       <Handle type="source" position={Position.Bottom} className="w-2 h-2" />
     </div>
@@ -66,7 +79,7 @@ export default function ChatbotBuilderPage() {
   }), []);
 
   // Specific handler for updating node data
-  const updateNodeData = useCallback((nodeId: string, newData: Partial<{ message: string; replies: any[]; targetNodeId: string }>) => {
+  const updateNodeData = useCallback((nodeId: string, newData: Partial<{ message: string; replies: any[]; targetNodeId: string; waitForReply: boolean }>) => {
     setNodes((nds) =>
       nds.map((node) => {
         if (node.id === nodeId) {
@@ -166,9 +179,16 @@ export default function ChatbotBuilderPage() {
             let cleanedData: any;
             
             if (node.type === 'messageNode') {
-                cleanedData = { message: node.data.message };
+                cleanedData = { 
+                    message: node.data.message,
+                    waitForReply: node.data.waitForReply !== false // Default to true
+                };
             } else if (node.type === 'quickReplyNode') {
-                cleanedData = { message: node.data.message, replies: node.data.replies };
+                cleanedData = { 
+                    message: node.data.message, 
+                    replies: node.data.replies,
+                    waitForReply: node.data.waitForReply !== false // Default to true
+                };
             } else if (node.type === 'endNode') {
                 cleanedData = { label: node.data.label || 'End' };
             } else if (node.type === 'loopNode') {
@@ -232,7 +252,12 @@ export default function ChatbotBuilderPage() {
             id: newNodeId,
             type,
             position,
-            data: { message: 'Ask a question', replies: [{title: 'Option 1'}], onChange: (data: object) => updateNodeData(newNodeId, data) },
+            data: { 
+                message: 'Ask a question', 
+                replies: [{title: 'Option 1'}], 
+                waitForReply: true,
+                onChange: (data: object) => updateNodeData(newNodeId, data) 
+            },
         };
       } else if (type === 'endNode') {
         newNode = {
@@ -263,7 +288,11 @@ export default function ChatbotBuilderPage() {
           id: newNodeId,
           type,
           position,
-          data: { message: `New message ${newNodeId}`, onChange: (data: object) => updateNodeData(newNodeId, data) },
+          data: { 
+              message: `New message ${newNodeId}`, 
+              waitForReply: true,
+              onChange: (data: object) => updateNodeData(newNodeId, data) 
+          },
         };
       }
 
