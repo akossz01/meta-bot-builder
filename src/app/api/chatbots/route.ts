@@ -16,8 +16,33 @@ export async function GET(req: NextRequest) {
 
     await connectToDatabase();
 
-    const chatbots = await Chatbot.find({ userId }).populate('accountId', 'accountName accountId'); // Populate with page info
-    return NextResponse.json(chatbots);
+    const chatbots = await Chatbot.find({ userId }).populate('accountId', 'accountName accountId accessToken');
+    
+    // Fetch profile pictures for each page
+    const chatbotsWithPictures = await Promise.all(
+      chatbots.map(async (bot) => {
+        const botObj = bot.toObject();
+        if (botObj.accountId && botObj.accountId.accountId && botObj.accountId.accessToken) {
+          try {
+            const response = await fetch(
+              `https://graph.facebook.com/v20.0/${botObj.accountId.accountId}/picture?redirect=false&access_token=${botObj.accountId.accessToken}`
+            );
+            const data = await response.json();
+            botObj.accountId.pictureUrl = data.data?.url || null;
+          } catch (error) {
+            console.error('Failed to fetch profile picture:', error);
+            botObj.accountId.pictureUrl = null;
+          }
+        }
+        // Remove accessToken from response for security
+        if (botObj.accountId) {
+          delete botObj.accountId.accessToken;
+        }
+        return botObj;
+      })
+    );
+
+    return NextResponse.json(chatbotsWithPictures);
 
   } catch (error) {
     console.error("Failed to fetch chatbots:", error);

@@ -55,10 +55,10 @@ export function QuickReplyNode({ data, id }: NodeProps<QuickReplyData>) {
     onChange({ replies: newReplies });
   };
   
-  // Base offset to position the first handle below the main content
-  const handleBaseTop = 130; 
-  // Vertical space between each handle
-  const handleSpacing = 48;
+  // Calculate handle position based on the actual position of each reply input
+  // Base position starts after: label (12px) + textarea (variable) + replies label (20px) + mt-1 (4px)
+  const handleBaseTop = 165; // Adjusted to align with first input field center
+  const handleSpacing = 40; // Height of input (32px) + gap (8px)
 
   return (
     <div 
@@ -152,21 +152,14 @@ export function QuickReplyNode({ data, id }: NodeProps<QuickReplyData>) {
 
       {/* Render a source handle for each reply option */}
       {replies.map((reply, index) => (
-        <div key={`handle-container-${index}`}>
-            <div 
-                className="absolute text-xs text-muted-foreground" 
-                style={{ top: `${handleBaseTop + index * handleSpacing - 8}px`, right: '1.75rem' }}
-            >
-                {reply.title.substring(0, 15) || `Option ${index + 1}`}
-            </div>
-            <Handle 
-                type="source" 
-                position={Position.Right} 
-                id={`handle-${index}`}
-                style={{ top: `${handleBaseTop + index * handleSpacing}px` }} 
-                className="w-3 h-3 !bg-primary"
-            />
-        </div>
+        <Handle 
+          key={`handle-${index}`}
+          type="source" 
+          position={Position.Right} 
+          id={`handle-${index}`}
+          style={{ top: `${handleBaseTop + index * handleSpacing}px` }} 
+          className="w-3 h-3 !bg-primary"
+        />
       ))}
     </div>
   );

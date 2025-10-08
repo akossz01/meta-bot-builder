@@ -61,3 +61,27 @@ export async function PUT(req: NextRequest, { params: paramsPromise }: { params:
         return NextResponse.json({ message: "An error occurred." }, { status: 500 });
     }
 }
+
+// DELETE a chatbot
+export async function DELETE(req: NextRequest, { params: paramsPromise }: { params: Promise<{ chatbotId: string }> }) {
+  try {
+    const tokenCookie = req.cookies.get("token");
+    if (!tokenCookie) throw new Error("Authentication required.");
+    const { payload } = await jwtVerify(tokenCookie.value, JWT_SECRET);
+    const userId = payload.userId as string;
+    const { chatbotId } = await paramsPromise;
+    
+    await connectToDatabase();
+
+    const deletedChatbot = await Chatbot.findOneAndDelete({ _id: chatbotId, userId });
+
+    if (!deletedChatbot) {
+      return NextResponse.json({ message: "Chatbot not found or access denied." }, { status: 404 });
+    }
+
+    return NextResponse.json({ message: "Chatbot deleted successfully." });
+  } catch (error) {
+    console.error(`Failed to delete chatbot:`, error);
+    return NextResponse.json({ message: "An error occurred." }, { status: 500 });
+  }
+}

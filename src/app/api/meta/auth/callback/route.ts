@@ -56,14 +56,14 @@ async function subscribeAppToPage(pageAccessToken: string, pageId: string) {
     },
     body: JSON.stringify({
       access_token: pageAccessToken,
-      subscribed_fields: ['messages'], // Subscribe to the messages field
+      subscribed_fields: ['messages', 'messaging_postbacks'], 
     }),
   });
   const data = await response.json();
   if (!data.success) {
     throw new Error(`Failed to subscribe app to page ${pageId}: ${JSON.stringify(data.error)}`);
   }
-  console.log(`Successfully subscribed app to page ${pageId}`);
+  console.log(`Successfully subscribed app to page ${pageId} with fields: messages, messaging_postbacks`);
 }
 
 /**

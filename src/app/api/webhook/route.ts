@@ -44,18 +44,20 @@ export async function POST(req: NextRequest) {
   }
 
   const payload = JSON.parse(body);
+  console.log('Webhook payload received:', JSON.stringify(payload, null, 2));
 
   if (payload.object === "page") {
     for (const entry of payload.entry) {
       for (const event of entry.messaging) {
+        console.log('Processing event:', JSON.stringify(event, null, 2));
         if (event.message) {
-          // Check if it's a quick reply
           if (event.message.quick_reply) {
             processQuickReply(event);
           } else if (!event.message.is_echo) {
             processMessage(event);
           }
         } else if (event.postback) {
+          console.log('Postback detected:', event.postback);
           processPostback(event);
         }
       }
@@ -74,20 +76,30 @@ async function processPostback(event: any) {
         const recipientId = event.recipient.id;
         const payload = event.postback.payload;
 
-        console.log(`Postback received - Payload: ${payload}`);
+        console.log(`Postback received - Sender: ${senderId}, Recipient: ${recipientId}, Payload: ${payload}`);
 
         await connectToDatabase();
 
         const messengerAccount = await MessengerAccount.findOne({ accountId: recipientId });
-        if (!messengerAccount) return;
+        if (!messengerAccount) {
+            console.log('No messenger account found for recipient:', recipientId);
+            return;
+        }
 
         const session = await UserSession.findOne({ user_psid: senderId, accountId: messengerAccount._id });
-        if (!session) return;
+        if (!session) {
+            console.log('No session found for user:', senderId);
+            return;
+        }
 
         const chatbot = await Chatbot.findById(session.chatbotId);
-        if (!chatbot) return;
+        if (!chatbot) {
+            console.log('No chatbot found');
+            return;
+        }
 
         const currentNode = chatbot.flow_json.nodes.find((n: any) => n.id === session.current_node_id);
+        console.log('Current node:', currentNode ? `${currentNode.id} (${currentNode.type})` : 'not found');
         
         // Handle card button postbacks
         if (currentNode && currentNode.type === 'cardNode' && payload.startsWith('CARD_BUTTON_')) {
@@ -95,10 +107,13 @@ async function processPostback(event: any) {
             const sourceHandleId = `button-${buttonIndex}`;
             
             console.log(`Card button ${buttonIndex} clicked, looking for handle: ${sourceHandleId}`);
+            console.log('Current node buttons:', JSON.stringify(currentNode.data.buttons));
             
             let nextNode = findNextNode(chatbot.flow_json, currentNode.id, sourceHandleId);
             
             if (nextNode) {
+                console.log(`Found next node: ${nextNode.id} (${nextNode.type})`);
+                
                 if (nextNode.type === 'loopNode') {
                     const targetNodeId = nextNode.data.targetNodeId;
                     if (targetNodeId) {
@@ -116,6 +131,9 @@ async function processPostback(event: any) {
                 if (nextNode.type !== 'endNode') {
                     await autoContinueFlow(chatbot.flow_json, nextNode, senderId, session, messengerAccount.accessToken);
                 }
+            } else {
+                console.log(`No next node found for handle: ${sourceHandleId}`);
+                console.log('Available edges:', JSON.stringify(chatbot.flow_json.edges));
             }
             return;
         }

@@ -46,6 +46,26 @@ export function CardNode({ data, id }: NodeProps<CardNodeData>) {
     onChange({ buttons: newButtons });
   };
 
+  const handleButtonTypeChange = (index: number, newType: 'web_url' | 'postback') => {
+    const newButtons = [...buttons];
+    if (newType === 'postback') {
+      // Switching to postback - remove url, add payload
+      newButtons[index] = {
+        title: newButtons[index].title,
+        type: 'postback',
+        payload: `BUTTON_${index}_CLICKED`
+      };
+    } else {
+      // Switching to web_url - remove payload, add url
+      newButtons[index] = {
+        title: newButtons[index].title,
+        type: 'web_url',
+        url: ''
+      };
+    }
+    onChange({ buttons: newButtons });
+  };
+
   const addButton = () => {
     if (buttons.length < 3) { // Messenger allows max 3 buttons per card
       const newButtons = [...buttons, { title: '', type: 'web_url' as const, url: '' }];
@@ -58,8 +78,10 @@ export function CardNode({ data, id }: NodeProps<CardNodeData>) {
     onChange({ buttons: newButtons });
   };
 
-  const handleBaseTop = 200;
-  const handleSpacing = 60;
+  // Calculate base position for first button handle
+  // Account for: title input + subtitle textarea + image input + buttons label + first button container padding
+  const handleBaseTop = 380; // Adjusted to align with first button center
+  const handleSpacing = 100; // Height of each button container (approx 96px) + gap
   
   // Check if there are any postback buttons
   const hasPostbackButtons = buttons.some(btn => btn.type === 'postback');
@@ -174,10 +196,7 @@ export function CardNode({ data, id }: NodeProps<CardNodeData>) {
                 <Select 
                   value={button.type} 
                   onValueChange={(value: 'web_url' | 'postback') => {
-                    handleButtonChange(index, 'type', value);
-                    if (value === 'postback') {
-                      handleButtonChange(index, 'payload', `BUTTON_${index}_CLICKED`);
-                    }
+                    handleButtonTypeChange(index, value);
                   }}
                 >
                   <SelectTrigger className="nodrag w-full">
@@ -214,25 +233,18 @@ export function CardNode({ data, id }: NodeProps<CardNodeData>) {
         </div>
       </div>
 
-      {/* Source handles for postback buttons */}
+      {/* Source handles for postback buttons - aligned with button centers */}
       {buttons.map((button, index) => {
         if (button.type === 'postback') {
           return (
-            <div key={`handle-container-${index}`}>
-              <div 
-                className="absolute text-xs text-muted-foreground" 
-                style={{ top: `${handleBaseTop + index * handleSpacing - 8}px`, right: '1.75rem' }}
-              >
-                {button.title.substring(0, 15) || `Button ${index + 1}`}
-              </div>
-              <Handle 
-                type="source" 
-                position={Position.Right} 
-                id={`button-${index}`}
-                style={{ top: `${handleBaseTop + index * handleSpacing}px` }} 
-                className="w-3 h-3 !bg-primary"
-              />
-            </div>
+            <Handle 
+              key={`button-${index}`}
+              type="source" 
+              position={Position.Right} 
+              id={`button-${index}`}
+              style={{ top: `${handleBaseTop + index * handleSpacing}px` }} 
+              className="w-3 h-3 !bg-primary"
+            />
           );
         }
         return null;
