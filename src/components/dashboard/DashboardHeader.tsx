@@ -13,7 +13,6 @@ export function DashboardHeader() {
         <MobileSidebar />
         <Link href="/" className="flex items-center gap-2 font-bold">
             <img src="/favicon.ico" alt="Logo" className="h-6 w-6" />
-            <span className="sr-only">{t("brandName")}</span>
         </Link>
       </div>
       

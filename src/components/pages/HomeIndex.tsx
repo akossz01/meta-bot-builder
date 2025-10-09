@@ -11,6 +11,7 @@ import {
   PlayCircle,
   Check,
   Linkedin,
+  ExternalLink,
 } from "lucide-react";
 import { motion, useScroll, useMotionValueEvent } from "framer-motion";
 import { Link } from "@/i18n/navigation";
@@ -77,14 +78,13 @@ function ModernHeader({ t }: { t: any }) {
       <div className="container mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2">
           <motion.img
-            src="/favicon.ico"
-            alt="Logo"
-            className="h-6 w-6"
+            src="/img/BuildYourChat Logo.png"
+            alt="BuildYourChat Logo"
+            className="h-8 w-auto"
             initial={{ rotate: -180, scale: 0 }}
             animate={{ rotate: 0, scale: 1 }}
             transition={{ type: "spring", stiffness: 260, damping: 20 }}
           />
-          <span className="font-bold">{t("brandName")}</span>
         </Link>
         <nav className="hidden items-center gap-6 text-sm font-medium md:flex">
           <Link
@@ -93,6 +93,15 @@ function ModernHeader({ t }: { t: any }) {
           >
             {t("nav.features")}
           </Link>
+          <a
+            href="https://blynkchat.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-muted-foreground transition-colors hover:text-foreground flex items-center gap-1"
+          >
+            BlynkChat
+            <ExternalLink className="h-3 w-3" />
+          </a>
         </nav>
         <div className="flex items-center gap-2">
           <Button
@@ -288,7 +297,7 @@ function UnderHeroFeatures({ t }: { t: any }) {
 
 function BentoFeaturesSection({ t }: { t: any }) {
   return (
-    <section id="features" className="py-24 bg-muted/50">
+    <section id="features" className="py-24">
       <div className="container mx-auto px-4 max-w-6xl">
         <div className="mx-auto max-w-2xl text-center mb-16">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
@@ -360,6 +369,39 @@ function BentoFeaturesSection({ t }: { t: any }) {
               </p>
             </div>
           </motion.div>
+
+          {/* Second Image with builder.gif */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+            viewport={{ once: true }}
+            className="rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-md transition-shadow min-h-[15rem] bg-muted"
+          >
+            <img 
+              src="/builder.gif" 
+              alt="Bot Builder" 
+              className="w-full h-full object-cover"
+            />
+          </motion.div>
+
+          {/* Bottom card spanning 2 columns */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+            viewport={{ once: true }}
+            className="md:col-span-2 bg-card rounded-[2.5rem] p-8 shadow-sm hover:shadow-md transition-shadow min-h-[15rem]"
+          >
+            <div className="flex flex-col gap-4">
+              <h2 className="text-4xl md:text-6xl font-bold text-foreground leading-[0.9] tracking-[-2px]">
+                Advanced Features
+              </h2>
+              <p className="text-lg text-muted-foreground font-medium leading-[1.3]">
+                Supercharge your support with powerful AI capabilities and seamless integrations.
+              </p>
+            </div>
+          </motion.div>
         </div>
       </div>
     </section>
@@ -421,13 +463,20 @@ function ModernFooter({ t }: { t: any }) {
           {/* Brand */}
           <div className="flex flex-col gap-4">
             <Link href="/" className="flex items-center gap-2">
-              <img src="/favicon.ico" alt="Logo" className="h-6 w-6" />
-              <span className="font-bold">{t("brandName")}</span>
+              <img src="/img/BuildYourChat Logo.png" alt="BuildYourChat Logo" className="h-8 w-auto" />
             </Link>
             <p className="text-sm text-muted-foreground">
               {t("hero.description")}
             </p>
             <div className="flex gap-4 mt-2">
+              <a
+                href="https://blynkchat.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-primary"
+              >
+                <ExternalLink className="h-5 w-5" />
+              </a>
               <Link
                 href="#"
                 className="text-muted-foreground hover:text-primary"
@@ -448,6 +497,17 @@ function ModernFooter({ t }: { t: any }) {
                 >
                   {t("nav.features")}
                 </Link>
+              </li>
+              <li>
+                <a
+                  href="https://blynkchat.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-muted-foreground hover:text-primary flex items-center gap-1"
+                >
+                  BlynkChat
+                  <ExternalLink className="h-3 w-3" />
+                </a>
               </li>
             </ul>
           </div>

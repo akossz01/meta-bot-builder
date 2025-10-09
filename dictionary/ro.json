@@ -1,6 +1,6 @@
 {
     "Index": {
-      "brandName": "ChatFlow AI",
+      "brandName": "BuildYourChat",
       "nav": {
         "features": "Funcționalități",
         "pricing": "Prețuri",
@@ -89,7 +89,7 @@
       "navDashboard": "Panou Control",
       "navConnections": "Conexiuni",
       "navSettings": "Setări",
-      "brandName": "ChatFlow AI"
+      "brandName": "BuildYourChat"
     },
     "Connections": {
       "title": "Gestionați Conexiunile",

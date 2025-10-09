@@ -9,7 +9,7 @@ import {
   Settings,
   Link2,
   Loader2,
-  BotMessageSquare, // Added import
+  BotMessageSquare,
   ChevronLeft,
 } from "lucide-react";
 
@@ -26,7 +26,7 @@ export function Sidebar() {
   const navItems = [
     { href: "/dashboard", icon: LayoutDashboard, label: t("navDashboard") },
     { href: "/dashboard/connections", icon: Link2, label: t("navConnections") },
-    { href: "/dashboard/chatbots", icon: BotMessageSquare, label: "Chatbots" }, // Added "Chatbots"
+    { href: "/dashboard/chatbots", icon: BotMessageSquare, label: "Chatbots" },
     { href: "/dashboard/settings", icon: Settings, label: t("navSettings") },
   ];
 
@@ -51,8 +51,7 @@ export function Sidebar() {
     <aside className="hidden md:flex md:flex-col bg-background border-r">
       <div className="flex h-16 items-center border-b px-6">
         <Link href="/" className="flex items-center gap-2 font-bold">
-          <img src="/favicon.ico" alt="Logo" className="h-6 w-6" />
-          <span>{tIndex('brandName')}</span>
+          <img src="/img/BuildYourChat Logo.png" alt="BuildYourChat Logo" className="h-8 w-auto" />
         </Link>
       </div>
       <div className="flex-1 overflow-y-auto">
@@ -62,8 +61,8 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-                pathname === item.href && "bg-muted text-primary"
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-all hover:text-foreground hover:bg-accent",
+                pathname === item.href && "bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary"
               )}
             >
               <item.icon className="h-4 w-4" />

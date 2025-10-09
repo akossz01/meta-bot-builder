@@ -1,6 +1,6 @@
 {
     "Index": {
-      "brandName": "ChatFlow AI",
+      "brandName": "BuildYourChat",
       "nav": {
         "features": "Funkciók",
         "pricing": "Árak",
@@ -89,7 +89,7 @@
       "navDashboard": "Vezérlőpult",
       "navConnections": "Kapcsolatok",
       "navSettings": "Beállítások",
-      "brandName": "ChatFlow AI"
+      "brandName": "BuildYourChat"
     },
     "Connections": {
       "title": "Kapcsolatok Kezelése",

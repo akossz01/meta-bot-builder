@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { PlusCircle, Bot, Loader2, MessageSquare, Trash2, Edit, Settings, FlaskConical } from "lucide-react";
+import { PlusCircle, Bot, Loader2, MessageSquare, Trash2, Edit, Settings, FlaskConical, MoreVertical, Power } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -35,8 +35,16 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslations } from "next-intl";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 // Types
 type ConnectedAccount = { _id: string; accountId: string; accountName: string; };
@@ -123,8 +131,17 @@ export default function ChatbotsPage() {
       });
       if (!response.ok) throw new Error('Failed to delete chatbot');
       fetchChatbots();
+      toast({
+        title: "Success",
+        description: "Chatbot deleted successfully",
+      });
     } catch (error) {
       console.error('Error deleting chatbot:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete chatbot",
+        variant: "destructive"
+      });
     } finally {
       setDeletingId(null);
     }
@@ -168,19 +185,29 @@ export default function ChatbotsPage() {
     }
   };
 
+  const getModeInfo = (mode: 'active' | 'test' | 'inactive' | undefined) => {
+    const actualMode = mode || 'inactive';
+    switch (actualMode) {
+      case 'active':
+        return { label: t("badges.active"), color: "bg-green-500", variant: "default" as const };
+      case 'test':
+        return { label: t("badges.test"), color: "bg-yellow-500", variant: "secondary" as const };
+      default:
+        return { label: t("modeInactive"), color: "bg-gray-400", variant: "outline" as const };
+    }
+  };
+
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex items-center justify-between mb-8">
+    <div className="flex flex-col gap-8">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
-          <p className="text-muted-foreground mt-2">
-            {t("description")}
-          </p>
+          <p className="text-muted-foreground mt-2">{t("description")}</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
+            <Button className="gap-2">
+              <PlusCircle className="h-4 w-4" />
               {t("createButton")}
             </Button>
           </DialogTrigger>
@@ -220,143 +247,171 @@ export default function ChatbotsPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex items-center gap-2 text-muted-foreground">
+        <div className="flex items-center justify-center gap-2 text-muted-foreground py-12">
           <Loader2 className="h-5 w-5 animate-spin" />
           <span>{t("loading")}</span>
         </div>
       ) : chatbots.length === 0 ? (
-        <div className="text-center py-12 border-2 border-dashed rounded-lg">
-            <MessageSquare className="mx-auto h-12 w-12 text-muted-foreground" />
-            <h3 className="mt-4 text-lg font-semibold">{t("noChatbots.title")}</h3>
-            <p className="mt-2 text-sm text-muted-foreground">{t("noChatbots.description")}</p>
-        </div>
+        <Card className="border-dashed">
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted mb-4">
+              <MessageSquare className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-semibold mb-1">{t("noChatbots.title")}</h3>
+            <p className="text-sm text-muted-foreground mb-4">{t("noChatbots.description")}</p>
+            <Button onClick={() => setIsDialogOpen(true)} className="gap-2">
+              <PlusCircle className="h-4 w-4" />
+              {t("createButton")}
+            </Button>
+          </CardContent>
+        </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {chatbots.map((chatbot) => {
             const actualMode = chatbot.mode || 'inactive';
-            const isActive = actualMode === 'active' || actualMode === 'test';
+            const modeInfo = getModeInfo(actualMode);
             
             return (
-              <Card key={chatbot._id} className={isActive ? 'border-primary' : ''}>
-                <CardHeader>
-                  <div className="flex items-start gap-3">
-                    {chatbot.accountId?.pictureUrl ? (
-                      <img 
-                        src={chatbot.accountId.pictureUrl} 
-                        alt={chatbot.accountId.accountName}
-                        className="w-12 h-12 rounded-full object-cover flex-shrink-0"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                        <Bot className="h-6 w-6 text-muted-foreground" />
+              <Card 
+                key={chatbot._id} 
+                className="group hover:shadow-md transition-all duration-200 hover:border-primary/20"
+              >
+                <CardContent className="p-6">
+                  {/* Header with Avatar and Status */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <Avatar className="h-12 w-12 ring-2 ring-background group-hover:ring-primary/10 transition-all">
+                        <AvatarImage
+                          src={chatbot.accountId?.pictureUrl || `https://graph.facebook.com/${chatbot.accountId?.accountId}/picture`}
+                          alt={chatbot.accountId?.accountName}
+                        />
+                        <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                          {chatbot.name.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-base truncate group-hover:text-primary transition-colors">
+                          {chatbot.name}
+                        </h3>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {chatbot.accountId?.accountName || 'Unknown Page'}
+                        </p>
                       </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <CardTitle className="flex items-center gap-2 flex-wrap">
-                        <span className="truncate">{chatbot.name}</span>
-                        {actualMode === 'active' && (
-                          <Badge variant="default">{t("badges.active")}</Badge>
-                        )}
-                        {actualMode === 'test' && (
-                          <Badge variant="secondary" className="gap-1">
-                            <FlaskConical className="h-3 w-3" />
-                            {t("badges.test")}
-                          </Badge>
-                        )}
-                      </CardTitle>
-                      <CardDescription className="truncate">
-                        {chatbot.accountId?.accountName || 'Unknown Page'}
-                      </CardDescription>
                     </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-col gap-2">
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => router.push(`/dashboard/chatbots/${chatbot._id}`)}
-                    >
-                      <Edit className="mr-2 h-4 w-4" />
-                      {t("editFlow")}
-                    </Button>
-
-                      <Select
-                        value={actualMode}
-                        onValueChange={(value: 'active' | 'test' | 'inactive') => handleModeChange(chatbot._id, value)}
-                        disabled={changingModeId === chatbot._id}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="inactive">{t("modeInactive")}</SelectItem>
-                          <SelectItem value="test">{t("modeTest")}</SelectItem>
-                          <SelectItem value="active">{t("modeActive")}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      {changingModeId === chatbot._id && (
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                          {t("deleting")}
-                        </div>
-                      )}
-
-                    {actualMode === 'test' && chatbot.testTrigger && (
-                      <div className="p-2 bg-muted rounded text-xs">
-                        <p className="font-semibold mb-1">{t("testTriggerLabel")}</p>
-                        <code className="bg-background px-2 py-1 rounded">{chatbot.testTrigger}</code>
-                      </div>
-                    )}
-
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => router.push(`/dashboard/chatbots/${chatbot._id}/settings`)}
-                    >
-                      <Settings className="mr-2 h-4 w-4" />
-                      {t("settingsButton")}
-                    </Button>
-
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          variant="destructive"
-                          className="w-full"
-                          disabled={deletingId === chatbot._id}
-                        >
-                          {deletingId === chatbot._id ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              {t("deleting")}
-                            </>
-                          ) : (
-                            <>
+                    
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => router.push(`/dashboard/chatbots/${chatbot._id}`)}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          {t("editFlow")}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => router.push(`/dashboard/chatbots/${chatbot._id}/settings`)}>
+                          <Settings className="mr-2 h-4 w-4" />
+                          {t("settingsButton")}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
                               <Trash2 className="mr-2 h-4 w-4" />
                               {t("deleteButton")}
-                            </>
-                          )}
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>{t("deleteDialog.title")}</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            {t("deleteDialog.description", { name: chatbot.name })}
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>{t("deleteDialog.cancel")}</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => handleDelete(chatbot._id)}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            {t("deleteDialog.confirm")}
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                            </DropdownMenuItem>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>{t("deleteDialog.title")}</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                {t("deleteDialog.description", { name: chatbot.name })}
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>{t("deleteDialog.cancel")}</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDelete(chatbot._id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                {t("deleteDialog.confirm")}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
+
+                  {/* Status Badge */}
+                  <div className="mb-4">
+                    <Badge variant={modeInfo.variant} className="gap-1.5">
+                      <span className={`inline-block h-1.5 w-1.5 rounded-full ${modeInfo.color} ${actualMode === 'active' ? 'animate-pulse' : ''}`} />
+                      {modeInfo.label}
+                      {actualMode === 'test' && <FlaskConical className="h-3 w-3" />}
+                    </Badge>
+                  </div>
+
+                  {/* Test Trigger Info */}
+                  {actualMode === 'test' && chatbot.testTrigger && (
+                    <div className="mb-4 p-3 bg-muted/50 rounded-lg border border-dashed">
+                      <p className="text-xs font-medium text-muted-foreground mb-1">{t("testTriggerLabel")}</p>
+                      <code className="text-xs bg-background px-2 py-1 rounded border">
+                        {chatbot.testTrigger}
+                      </code>
+                    </div>
+                  )}
+
+                  {/* Mode Selector */}
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Bot Status</Label>
+                    <Select
+                      value={actualMode}
+                      onValueChange={(value: 'active' | 'test' | 'inactive') => handleModeChange(chatbot._id, value)}
+                      disabled={changingModeId === chatbot._id}
+                    >
+                      <SelectTrigger className="w-full h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="inactive">
+                          <div className="flex items-center gap-2">
+                            <Power className="h-3.5 w-3.5" />
+                            {t("modeInactive")}
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="test">
+                          <div className="flex items-center gap-2">
+                            <FlaskConical className="h-3.5 w-3.5" />
+                            {t("modeTest")}
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="active">
+                          <div className="flex items-center gap-2">
+                            <Power className="h-3.5 w-3.5 text-green-500" />
+                            {t("modeActive")}
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {changingModeId === chatbot._id && (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        <span>Updating...</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Primary Action */}
+                  <Button
+                    onClick={() => router.push(`/dashboard/chatbots/${chatbot._id}`)}
+                    className="w-full mt-4 gap-2"
+                    variant="outline"
+                  >
+                    <Edit className="h-4 w-4" />
+                    {t("editFlow")}
+                  </Button>
                 </CardContent>
               </Card>
             );
