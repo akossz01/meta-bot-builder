@@ -191,5 +191,113 @@
     "ChatbotBuilder": {
       "saveButton": "Salvează Fluxul",
       "saving": "Se salvează..."
+    },
+    "FlowNodes": {
+      "message": {
+        "label": "Mesaj Răspuns",
+        "placeholder": "Scrie mesajul...",
+        "waitForReply": "Așteaptă răspuns"
+      },
+      "quickReply": {
+        "label": "Întrebare / Mesaj",
+        "placeholder": "Pune o întrebare...",
+        "repliesLabel": "Răspunsuri",
+        "replyPlaceholder": "Răspuns #",
+        "addReply": "Adaugă Răspuns",
+        "waitForReply": "Așteaptă răspuns"
+      },
+      "card": {
+        "title": "Mesaj Card",
+        "titleLabel": "Titlu",
+        "titlePlaceholder": "Titlul cardului",
+        "subtitleLabel": "Subtitlu (opțional)",
+        "subtitlePlaceholder": "Descrierea cardului",
+        "imageLabel": "URL Imagine (opțional)",
+        "imagePlaceholder": "https://example.com/image.jpg",
+        "buttonsLabel": "Butoane",
+        "buttonPlaceholder": "Text buton",
+        "addButton": "Adaugă Buton",
+        "buttonTypeUrl": "Deschide URL",
+        "buttonTypePostback": "Pasul Următor",
+        "urlPlaceholder": "https://example.com"
+      },
+      "media": {
+        "title": "Mesaj Imagine",
+        "imageLabel": "URL Imagine",
+        "imagePlaceholder": "https://example.com/image.jpg",
+        "formats": "Formate suportate: JPG, PNG, GIF"
+      },
+      "carousel": {
+        "title": "Carusel",
+        "titleLabel": "Titlu",
+        "titlePlaceholder": "Titlul cardului",
+        "subtitleLabel": "Subtitlu (opțional)",
+        "subtitlePlaceholder": "Descrierea cardului",
+        "imageLabel": "URL Imagine (opțional)",
+        "imagePlaceholder": "https://example.com/image.jpg",
+        "buttonsLabel": "Butoane",
+        "buttonPlaceholder": "Text buton",
+        "addButton": "Adaugă Buton",
+        "addCard": "Adaugă Card",
+        "buttonTypeUrl": "Deschide URL",
+        "buttonTypePostback": "Pasul Următor",
+        "urlPlaceholder": "https://example.com"
+      },
+      "end": {
+        "title": "Încheie Conversația",
+        "sendMessage": "Trimite mesaj final",
+        "messageLabel": "Mesaj de Rămas Bun",
+        "messagePlaceholder": "Mulțumim că ați discutat cu noi!",
+        "silentEnd": "Conversația se încheie în tăcere"
+      },
+      "loop": {
+        "title": "Revenire",
+        "jumpTo": "Sari la:",
+        "selectNode": "Selectează nod...",
+        "noNodes": "Niciun nod disponibil",
+        "description": "Reîncepe de la nodul selectat"
+      }
+    },
+    "FlowSidebar": {
+      "title": "Adaugă Noduri",
+      "search": "Caută noduri...",
+      "categories": {
+        "basic": "De Bază",
+        "interactive": "Interactiv",
+        "media": "Media",
+        "control": "Control Flux"
+      },
+      "nodes": {
+        "message": {
+          "name": "Mesaj Text",
+          "description": "Trimite un mesaj text simplu"
+        },
+        "quickReply": {
+          "name": "Răspunsuri Rapide",
+          "description": "Pune o întrebare cu opțiuni de buton"
+        },
+        "card": {
+          "name": "Card",
+          "description": "Card bogat cu imagine și butoane"
+        },
+        "carousel": {
+          "name": "Carusel",
+          "description": "Mai multe carduri într-un carusel derulabil"
+        },
+        "media": {
+          "name": "Imagine",
+          "description": "Trimite o imagine"
+        },
+        "end": {
+          "name": "Sfârșit",
+          "description": "Încheie conversația"
+        },
+        "loop": {
+          "name": "Buclă",
+          "description": "Sari înapoi la un nod anterior"
+        }
+      },
+      "placementMode": "Apasă pe canvas pentru a plasa nodul",
+      "cancel": "Anulează"
     }
   }

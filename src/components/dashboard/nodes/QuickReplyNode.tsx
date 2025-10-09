@@ -6,6 +6,7 @@ import { PlusCircle, X } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useTranslations } from 'next-intl';
 
 // Color palette for nodes - only border colors
 const NODE_COLORS = [
@@ -31,6 +32,7 @@ type QuickReplyData = {
 export function QuickReplyNode({ data, id }: NodeProps<QuickReplyData>) {
   const { message, replies, waitForReply, color, onChange } = data;
   const borderColor = color || 'hsl(var(--border))';
+  const t = useTranslations("FlowNodes.quickReply");
 
   const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     onChange({ message: e.target.value });
@@ -99,16 +101,16 @@ export function QuickReplyNode({ data, id }: NodeProps<QuickReplyData>) {
       </Popover>
 
       <div className="flex flex-col gap-3">
-        <label className="text-xs font-semibold text-muted-foreground">Question / Message</label>
+        <label className="text-xs font-semibold text-muted-foreground">{t("label")}</label>
         <Textarea
           value={message}
           onChange={handleMessageChange}
           className="nodrag"
-          placeholder="Ask a question..."
+          placeholder={t("placeholder")}
         />
         <div>
           <label className="text-xs font-semibold text-muted-foreground">
-            Replies ({replies.length} / 6)
+            {t("repliesLabel")} ({replies.length} / 6)
           </label>
           <div className="flex flex-col gap-2 mt-1">
             {replies.map((reply, index) => (
@@ -118,7 +120,7 @@ export function QuickReplyNode({ data, id }: NodeProps<QuickReplyData>) {
                   value={reply.title}
                   onChange={(e) => handleReplyChange(index, e.target.value)}
                   className="nodrag"
-                  placeholder={`Reply #${index + 1}`}
+                  placeholder={`${t("replyPlaceholder")}${index + 1}`}
                   maxLength={20} // Facebook quick replies have a 20-char limit
                 />
                 <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => removeReply(index)}>
@@ -129,12 +131,12 @@ export function QuickReplyNode({ data, id }: NodeProps<QuickReplyData>) {
           </div>
           <Button variant="outline" size="sm" className="mt-2" onClick={addReply} disabled={replies.length >= 6}>
             <PlusCircle className="h-4 w-4 mr-2" />
-            Add Reply
+            {t("addReply")}
           </Button>
         </div>
         <div className="flex items-center justify-between pt-2 border-t">
           <Label htmlFor={`wait-${id}`} className="text-xs cursor-pointer">
-            Wait for reply
+            {t("waitForReply")}
           </Label>
           <Switch
             id={`wait-${id}`}

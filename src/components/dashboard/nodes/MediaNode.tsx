@@ -3,6 +3,7 @@ import { Image as ImageIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useTranslations } from 'next-intl';
 
 // Color palette for nodes - only border colors
 const NODE_COLORS = [
@@ -25,6 +26,7 @@ type MediaNodeData = {
 export function MediaNode({ data }: NodeProps<MediaNodeData>) {
   const { imageUrl, color, onChange } = data;
   const borderColor = color || 'hsl(var(--border))';
+  const t = useTranslations("FlowNodes.media");
 
   return (
     <div 
@@ -68,16 +70,16 @@ export function MediaNode({ data }: NodeProps<MediaNodeData>) {
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-2">
           <ImageIcon className="h-5 w-5 text-primary" />
-          <span className="text-sm font-semibold">Image Message</span>
+          <span className="text-sm font-semibold">{t("title")}</span>
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label className="text-xs">Image URL *</Label>
+          <Label className="text-xs">{t("imageLabel")} *</Label>
           <Input
             value={imageUrl || ''}
             onChange={(e) => onChange({ imageUrl: e.target.value })}
             className="nodrag"
-            placeholder="https://example.com/image.jpg"
+            placeholder={t("imagePlaceholder")}
             type="url"
           />
         </div>
@@ -96,7 +98,7 @@ export function MediaNode({ data }: NodeProps<MediaNodeData>) {
         )}
 
         <p className="text-xs text-muted-foreground">
-          Supported formats: JPG, PNG, GIF
+          {t("formats")}
         </p>
       </div>
 

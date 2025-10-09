@@ -3,6 +3,7 @@ import { CircleOff } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { useTranslations } from 'next-intl';
 
 type EndNodeData = {
   label?: string;
@@ -13,6 +14,7 @@ type EndNodeData = {
 
 export function EndNode({ data }: NodeProps<EndNodeData>) {
   const { message, sendMessage, onChange } = data;
+  const t = useTranslations("FlowNodes.end");
 
   return (
     <div className="p-4 border-2 border-destructive bg-background rounded-lg shadow-md w-64">
@@ -20,12 +22,12 @@ export function EndNode({ data }: NodeProps<EndNodeData>) {
       <div className="flex flex-col gap-3">
         <div className="flex flex-col items-center gap-2">
           <CircleOff className="h-8 w-8 text-destructive" />
-          <span className="text-sm font-semibold text-center">End Conversation</span>
+          <span className="text-sm font-semibold text-center">{t("title")}</span>
         </div>
         
         <div className="flex items-center justify-between pt-2 border-t">
           <Label htmlFor="send-end-message" className="text-xs cursor-pointer">
-            Send final message
+            {t("sendMessage")}
           </Label>
           <Switch
             id="send-end-message"
@@ -37,19 +39,19 @@ export function EndNode({ data }: NodeProps<EndNodeData>) {
 
         {sendMessage !== false && (
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-semibold text-muted-foreground">Goodbye Message</label>
+            <label className="text-xs font-semibold text-muted-foreground">{t("messageLabel")}</label>
             <Textarea
               value={message || ''}
               onChange={(e) => onChange?.({ message: e.target.value })}
               className="nodrag"
-              placeholder="Thank you for chatting with us!"
+              placeholder={t("messagePlaceholder")}
             />
           </div>
         )}
 
         {sendMessage === false && (
           <span className="text-xs text-muted-foreground text-center">
-            Conversation ends silently
+            {t("silentEnd")}
           </span>
         )}
       </div>

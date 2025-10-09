@@ -191,5 +191,113 @@
     "ChatbotBuilder": {
       "saveButton": "Folyamat Mentése",
       "saving": "Mentés..."
+    },
+    "FlowNodes": {
+      "message": {
+        "label": "Válasz Üzenet",
+        "placeholder": "Írja be az üzenetet...",
+        "waitForReply": "Várjon válaszra"
+      },
+      "quickReply": {
+        "label": "Kérdés / Üzenet",
+        "placeholder": "Tegyen fel egy kérdést...",
+        "repliesLabel": "Válaszok",
+        "replyPlaceholder": "Válasz #",
+        "addReply": "Válasz Hozzáadása",
+        "waitForReply": "Várjon válaszra"
+      },
+      "card": {
+        "title": "Kártya Üzenet",
+        "titleLabel": "Cím",
+        "titlePlaceholder": "Kártya címe",
+        "subtitleLabel": "Alcím (opcionális)",
+        "subtitlePlaceholder": "Kártya leírása",
+        "imageLabel": "Kép URL (opcionális)",
+        "imagePlaceholder": "https://example.com/image.jpg",
+        "buttonsLabel": "Gombok",
+        "buttonPlaceholder": "Gomb szövege",
+        "addButton": "Gomb Hozzáadása",
+        "buttonTypeUrl": "URL Megnyitása",
+        "buttonTypePostback": "Következő Lépés",
+        "urlPlaceholder": "https://example.com"
+      },
+      "media": {
+        "title": "Kép Üzenet",
+        "imageLabel": "Kép URL",
+        "imagePlaceholder": "https://example.com/image.jpg",
+        "formats": "Támogatott formátumok: JPG, PNG, GIF"
+      },
+      "carousel": {
+        "title": "Körhinta",
+        "titleLabel": "Cím",
+        "titlePlaceholder": "Kártya címe",
+        "subtitleLabel": "Alcím (opcionális)",
+        "subtitlePlaceholder": "Kártya leírása",
+        "imageLabel": "Kép URL (opcionális)",
+        "imagePlaceholder": "https://example.com/image.jpg",
+        "buttonsLabel": "Gombok",
+        "buttonPlaceholder": "Gomb szövege",
+        "addButton": "Gomb Hozzáadása",
+        "addCard": "Kártya Hozzáadása",
+        "buttonTypeUrl": "URL Megnyitása",
+        "buttonTypePostback": "Következő Lépés",
+        "urlPlaceholder": "https://example.com"
+      },
+      "end": {
+        "title": "Beszélgetés Befejezése",
+        "sendMessage": "Záró üzenet küldése",
+        "messageLabel": "Búcsú Üzenet",
+        "messagePlaceholder": "Köszönjük, hogy beszélgetett velünk!",
+        "silentEnd": "A beszélgetés csendben ér véget"
+      },
+      "loop": {
+        "title": "Visszaugrás",
+        "jumpTo": "Ugrás ide:",
+        "selectNode": "Csomópont kiválasztása...",
+        "noNodes": "Nincs elérhető csomópont",
+        "description": "Újraindítás a kiválasztott csomóponttól"
+      }
+    },
+    "FlowSidebar": {
+      "title": "Csomópontok Hozzáadása",
+      "search": "Csomópontok keresése...",
+      "categories": {
+        "basic": "Alapvető",
+        "interactive": "Interaktív",
+        "media": "Média",
+        "control": "Folyamat Vezérlés"
+      },
+      "nodes": {
+        "message": {
+          "name": "Szöveges Üzenet",
+          "description": "Egyszerű szöveges üzenet küldése"
+        },
+        "quickReply": {
+          "name": "Gyorsválaszok",
+          "description": "Kérdés feltétele gomb opciókkal"
+        },
+        "card": {
+          "name": "Kártya",
+          "description": "Gazdag kártya képpel és gombokkal"
+        },
+        "carousel": {
+          "name": "Körhinta",
+          "description": "Több kártya görgetőlista formájában"
+        },
+        "media": {
+          "name": "Kép",
+          "description": "Kép küldése"
+        },
+        "end": {
+          "name": "Befejezés",
+          "description": "Beszélgetés befejezése"
+        },
+        "loop": {
+          "name": "Hurok",
+          "description": "Visszaugrás egy korábbi csomópontra"
+        }
+      },
+      "placementMode": "Koppintson a vászonra a csomópont elhelyezéséhez",
+      "cancel": "Mégse"
     }
   }

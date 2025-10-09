@@ -6,6 +6,7 @@ import { PlusCircle, X, CreditCard } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useTranslations } from 'next-intl';
 
 // Color palette for nodes - only border colors
 const NODE_COLORS = [
@@ -38,6 +39,7 @@ type CardNodeData = {
 export function CardNode({ data, id }: NodeProps<CardNodeData>) {
   const { title, subtitle, imageUrl, buttons, color, onChange } = data;
   const borderColor = color || 'hsl(var(--border))';
+  const t = useTranslations("FlowNodes.card");
 
   const handleButtonChange = (index: number, field: keyof CardButton, value: string) => {
     const newButtons = [...buttons];
@@ -127,45 +129,45 @@ export function CardNode({ data, id }: NodeProps<CardNodeData>) {
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-2">
           <CreditCard className="h-5 w-5 text-primary" />
-          <span className="text-sm font-semibold">Card Message</span>
+          <span className="text-sm font-semibold">{t("title")}</span>
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label className="text-xs">Title *</Label>
+          <Label className="text-xs">{t("titleLabel")} *</Label>
           <Input
             value={title}
             onChange={(e) => onChange({ title: e.target.value })}
             className="nodrag"
-            placeholder="Card title"
+            placeholder={t("titlePlaceholder")}
             maxLength={80}
           />
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label className="text-xs">Subtitle (optional)</Label>
+          <Label className="text-xs">{t("subtitleLabel")}</Label>
           <Textarea
             value={subtitle || ''}
             onChange={(e) => onChange({ subtitle: e.target.value })}
             className="nodrag"
-            placeholder="Card description"
+            placeholder={t("subtitlePlaceholder")}
             rows={2}
           />
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label className="text-xs">Image URL (optional)</Label>
+          <Label className="text-xs">{t("imageLabel")}</Label>
           <Input
             value={imageUrl || ''}
             onChange={(e) => onChange({ imageUrl: e.target.value })}
             className="nodrag"
-            placeholder="https://example.com/image.jpg"
+            placeholder={t("imagePlaceholder")}
             type="url"
           />
         </div>
 
         <div>
           <Label className="text-xs font-semibold">
-            Buttons ({buttons.length} / 3)
+            {t("buttonsLabel")} ({buttons.length} / 3)
           </Label>
           <div className="flex flex-col gap-3 mt-2">
             {buttons.map((button, index) => (
@@ -175,7 +177,7 @@ export function CardNode({ data, id }: NodeProps<CardNodeData>) {
                     value={button.title}
                     onChange={(e) => handleButtonChange(index, 'title', e.target.value)}
                     className="nodrag flex-1"
-                    placeholder="Button text"
+                    placeholder={t("buttonPlaceholder")}
                     maxLength={20}
                   />
                   <Button 
@@ -198,8 +200,8 @@ export function CardNode({ data, id }: NodeProps<CardNodeData>) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="web_url">Open URL</SelectItem>
-                    <SelectItem value="postback">Next Step</SelectItem>
+                    <SelectItem value="web_url">{t("buttonTypeUrl")}</SelectItem>
+                    <SelectItem value="postback">{t("buttonTypePostback")}</SelectItem>
                   </SelectContent>
                 </Select>
 
@@ -208,7 +210,7 @@ export function CardNode({ data, id }: NodeProps<CardNodeData>) {
                     value={button.url || ''}
                     onChange={(e) => handleButtonChange(index, 'url', e.target.value)}
                     className="nodrag"
-                    placeholder="https://example.com"
+                    placeholder={t("urlPlaceholder")}
                     type="url"
                   />
                 )}
@@ -223,7 +225,7 @@ export function CardNode({ data, id }: NodeProps<CardNodeData>) {
             disabled={buttons.length >= 3}
           >
             <PlusCircle className="h-4 w-4 mr-2" />
-            Add Button
+            {t("addButton")}
           </Button>
         </div>
       </div>

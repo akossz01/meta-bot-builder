@@ -191,5 +191,113 @@
   "ChatbotBuilder": {
     "saveButton": "Save Flow",
     "saving": "Saving..."
+  },
+  "FlowNodes": {
+    "message": {
+      "label": "Reply Message",
+      "placeholder": "Type your message...",
+      "waitForReply": "Wait for reply"
+    },
+    "quickReply": {
+      "label": "Question / Message",
+      "placeholder": "Ask a question...",
+      "repliesLabel": "Replies",
+      "replyPlaceholder": "Reply #",
+      "addReply": "Add Reply",
+      "waitForReply": "Wait for reply"
+    },
+    "card": {
+      "title": "Card Message",
+      "titleLabel": "Title",
+      "titlePlaceholder": "Card title",
+      "subtitleLabel": "Subtitle (optional)",
+      "subtitlePlaceholder": "Card description",
+      "imageLabel": "Image URL (optional)",
+      "imagePlaceholder": "https://example.com/image.jpg",
+      "buttonsLabel": "Buttons",
+      "buttonPlaceholder": "Button text",
+      "addButton": "Add Button",
+      "buttonTypeUrl": "Open URL",
+      "buttonTypePostback": "Next Step",
+      "urlPlaceholder": "https://example.com"
+    },
+    "media": {
+      "title": "Image Message",
+      "imageLabel": "Image URL",
+      "imagePlaceholder": "https://example.com/image.jpg",
+      "formats": "Supported formats: JPG, PNG, GIF"
+    },
+    "carousel": {
+      "title": "Carousel",
+      "titleLabel": "Title",
+      "titlePlaceholder": "Card title",
+      "subtitleLabel": "Subtitle (optional)",
+      "subtitlePlaceholder": "Card description",
+      "imageLabel": "Image URL (optional)",
+      "imagePlaceholder": "https://example.com/image.jpg",
+      "buttonsLabel": "Buttons",
+      "buttonPlaceholder": "Button text",
+      "addButton": "Add Button",
+      "addCard": "Add Card",
+      "buttonTypeUrl": "Open URL",
+      "buttonTypePostback": "Next Step",
+      "urlPlaceholder": "https://example.com"
+    },
+    "end": {
+      "title": "End Conversation",
+      "sendMessage": "Send final message",
+      "messageLabel": "Goodbye Message",
+      "messagePlaceholder": "Thank you for chatting with us!",
+      "silentEnd": "Conversation ends silently"
+    },
+    "loop": {
+      "title": "Loop Back",
+      "jumpTo": "Jump to:",
+      "selectNode": "Select node...",
+      "noNodes": "No nodes available",
+      "description": "Restarts from selected node"
+    }
+  },
+  "FlowSidebar": {
+    "title": "Add Nodes",
+    "search": "Search nodes...",
+    "categories": {
+      "basic": "Basic",
+      "interactive": "Interactive",
+      "media": "Media",
+      "control": "Control Flow"
+    },
+    "nodes": {
+      "message": {
+        "name": "Text Message",
+        "description": "Send a simple text message"
+      },
+      "quickReply": {
+        "name": "Quick Replies",
+        "description": "Ask a question with button options"
+      },
+      "card": {
+        "name": "Card",
+        "description": "Rich card with image and buttons"
+      },
+      "carousel": {
+        "name": "Carousel",
+        "description": "Multiple cards in a scrollable carousel"
+      },
+      "media": {
+        "name": "Image",
+        "description": "Send an image"
+      },
+      "end": {
+        "name": "End",
+        "description": "End the conversation"
+      },
+      "loop": {
+        "name": "Loop",
+        "description": "Jump back to a previous node"
+      }
+    },
+    "placementMode": "Tap on canvas to place node",
+    "cancel": "Cancel"
   }
 }

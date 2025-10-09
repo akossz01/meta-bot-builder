@@ -2,6 +2,7 @@ import { Handle, Position, NodeProps } from 'reactflow';
 import { RotateCcw } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useTranslations } from 'next-intl';
 
 // Color palette for nodes - only border colors
 const NODE_COLORS = [
@@ -25,6 +26,7 @@ type LoopNodeData = {
 export function LoopNode({ data }: NodeProps<LoopNodeData>) {
   const { targetNodeId, color, onChange, availableNodes = [] } = data;
   const borderColor = color || 'rgb(59, 130, 246)';
+  const t = useTranslations("FlowNodes.loop");
 
   const handleTargetChange = (value: string) => {
     if (onChange) {
@@ -77,16 +79,16 @@ export function LoopNode({ data }: NodeProps<LoopNodeData>) {
 
       <div className="flex flex-col items-center gap-3">
         <RotateCcw className="h-8 w-8" style={{ color: borderColor }} />
-        <span className="text-sm font-semibold text-center">Loop Back</span>
+        <span className="text-sm font-semibold text-center">{t("title")}</span>
         <div className="w-full">
-          <label className="text-xs text-muted-foreground block mb-1">Jump to:</label>
+          <label className="text-xs text-muted-foreground block mb-1">{t("jumpTo")}</label>
           <Select value={targetNodeId || ''} onValueChange={handleTargetChange}>
             <SelectTrigger className="nodrag w-full">
-              <SelectValue placeholder="Select node..." />
+              <SelectValue placeholder={t("selectNode")} />
             </SelectTrigger>
             <SelectContent>
               {availableNodes.length === 0 ? (
-                <SelectItem value="none" disabled>No nodes available</SelectItem>
+                <SelectItem value="none" disabled>{t("noNodes")}</SelectItem>
               ) : (
                 availableNodes.map((node) => (
                   <SelectItem key={node.id} value={node.id}>
@@ -98,7 +100,7 @@ export function LoopNode({ data }: NodeProps<LoopNodeData>) {
           </Select>
         </div>
         <span className="text-xs text-muted-foreground text-center">
-          Restarts from selected node
+          {t("description")}
         </span>
       </div>
     </div>

@@ -1,78 +1,66 @@
+"use client";
+
 import React, { useState } from 'react';
+import { useTranslations } from "next-intl";
 import { RotateCcw, CircleOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 type FlowBuilderSidebarProps = {
-  onNodeTypeSelect?: (nodeType: string) => void;
+  onNodeTypeSelect: (nodeType: string) => void;
 };
 
 type NodeCategory = 'all' | 'reply' | 'functional';
 
 type NodeTypeCard = {
   type: string;
-  title: string;
-  subtitle: string;
   imagePath: string;
   borderColor?: string;
   category: 'reply' | 'functional';
 };
 
-const nodeTypes: NodeTypeCard[] = [
-  {
-    type: 'messageNode',
-    title: 'Message',
-    subtitle: 'Send a text message',
-    imagePath: '/img/text_reply.png',
-    category: 'reply',
-  },
-  {
-    type: 'quickReplyNode',
-    title: 'Quick Reply',
-    subtitle: 'Add quick reply buttons',
-    imagePath: '/img/options_reply.png',
-    category: 'reply',
-  },
-  {
-    type: 'cardNode',
-    title: 'Card',
-    subtitle: 'Rich media card with buttons',
-    imagePath: '/img/card_reply.png',
-    category: 'reply',
-  },
-  {
-    type: 'carouselNode',
-    title: 'Carousel',
-    subtitle: 'Multiple cards in a carousel',
-    imagePath: '/img/carousel_reply.png',
-    category: 'reply',
-  },
-  {
-    type: 'mediaNode',
-    title: 'Image',
-    subtitle: 'Send an image',
-    imagePath: '/img/img_reply.png',
-    category: 'reply',
-  },
-  {
-    type: 'loopNode',
-    title: 'Loop',
-    subtitle: 'Jump to another node',
-    imagePath: '',
-    borderColor: 'border-blue-500',
-    category: 'functional',
-  },
-  {
-    type: 'endNode',
-    title: 'End',
-    subtitle: 'End the conversation',
-    imagePath: '',
-    borderColor: 'border-destructive',
-    category: 'functional',
-  },
-];
-
-export const FlowBuilderSidebar = ({ onNodeTypeSelect }: FlowBuilderSidebarProps) => {
+export function FlowBuilderSidebar({ onNodeTypeSelect }: FlowBuilderSidebarProps) {
   const [selectedCategory, setSelectedCategory] = useState<NodeCategory>('all');
+  const t = useTranslations("FlowSidebar");
+
+  const nodeTypes: NodeTypeCard[] = [
+    {
+      type: 'messageNode',
+      imagePath: '/img/text_reply.png',
+      category: 'reply',
+    },
+    {
+      type: 'quickReplyNode',
+      imagePath: '/img/options_reply.png',
+      category: 'reply',
+    },
+    {
+      type: 'cardNode',
+      imagePath: '/img/card_reply.png',
+      category: 'reply',
+    },
+    {
+      type: 'carouselNode',
+      imagePath: '/img/carousel_reply.png',
+      category: 'reply',
+    },
+    {
+      type: 'mediaNode',
+      imagePath: '/img/img_reply.png',
+      category: 'reply',
+    },
+    {
+      type: 'loopNode',
+      imagePath: '',
+      borderColor: 'border-blue-500',
+      category: 'functional',
+    },
+    {
+      type: 'endNode',
+      imagePath: '',
+      borderColor: 'border-destructive',
+      category: 'functional',
+    },
+  ];
 
   const onDragStart = (event: React.DragEvent, nodeType: string) => {
     event.dataTransfer.setData('application/reactflow', nodeType);
@@ -101,12 +89,12 @@ export const FlowBuilderSidebar = ({ onNodeTypeSelect }: FlowBuilderSidebarProps
   });
 
   return (
-    <aside className="h-full flex flex-col overflow-hidden p-4">
+    <aside className="h-full flex flex-col overflow-hidden p-4 bg-background">
       {/* Header - stays fixed */}
       <div className="sticky top-0 z-10 bg-background pb-4">
-        <h3 className="text-xl font-bold hidden md:block mb-2">Nodes</h3>
+        <h3 className="text-xl font-bold hidden md:block mb-2">{t("title")}</h3>
         <p className="text-sm text-muted-foreground mb-4 hidden lg:block">
-          Drag to canvas or tap to place
+          {t("placementMode")}
         </p>
 
         {/* Filter Buttons */}
@@ -165,7 +153,7 @@ export const FlowBuilderSidebar = ({ onNodeTypeSelect }: FlowBuilderSidebarProps
                   {node.imagePath ? (
                     <img
                       src={node.imagePath}
-                      alt={node.title}
+                      alt={t(`nodes.${node.type.replace('Node', '')}.name`)}
                       className="absolute inset-0 w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-300"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"%3E%3Crect x="3" y="3" width="18" height="18" rx="2"/%3E%3Cpath d="M9 9h6v6H9z"/%3E%3C/svg%3E';
@@ -179,9 +167,11 @@ export const FlowBuilderSidebar = ({ onNodeTypeSelect }: FlowBuilderSidebarProps
                 </div>
                 
                 <div className="p-4">
-                  <h4 className="font-semibold text-base mb-1">{node.title}</h4>
+                  <h4 className="font-semibold text-base mb-1">
+                    {t(`nodes.${node.type.replace('Node', '')}.name`)}
+                  </h4>
                   <p className="text-sm text-muted-foreground line-clamp-2">
-                    {node.subtitle}
+                    {t(`nodes.${node.type.replace('Node', '')}.description`)}
                   </p>
                 </div>
               </div>
@@ -191,4 +181,4 @@ export const FlowBuilderSidebar = ({ onNodeTypeSelect }: FlowBuilderSidebarProps
       </div>
     </aside>
   );
-};
+}

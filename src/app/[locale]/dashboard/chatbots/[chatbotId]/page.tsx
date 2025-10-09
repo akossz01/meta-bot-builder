@@ -50,6 +50,7 @@ const NODE_COLORS = [
 // Custom Node for displaying and editing a message
 function MessageNode({ data }: NodeProps<{ message: string; waitForReply?: boolean; color?: string; borderColor?: string; onChange: (data: { message?: string; waitForReply?: boolean; color?: string; borderColor?: string }) => void }>) {
   const borderColor = data.color || 'hsl(var(--border))';
+  const t = useTranslations("FlowNodes.message");
 
   return (
     <div 
@@ -93,15 +94,16 @@ function MessageNode({ data }: NodeProps<{ message: string; waitForReply?: boole
       </Popover>
 
       <div className="flex flex-col gap-2">
-        <label className="text-xs font-semibold text-muted-foreground">Reply Message</label>
+        <label className="text-xs font-semibold text-muted-foreground">{t("label")}</label>
         <Textarea
           value={data.message || ''}
           onChange={(e) => data.onChange({ message: e.target.value })}
-          className="nodrag" // Prevents dragging the node when interacting with the textarea
+          className="nodrag"
+          placeholder={t("placeholder")}
         />
         <div className="flex items-center justify-between pt-2 border-t">
           <Label htmlFor={`wait-${data.message}`} className="text-xs cursor-pointer">
-            Wait for reply
+            {t("waitForReply")}
           </Label>
           <Switch
             id={`wait-${data.message}`}
@@ -122,6 +124,7 @@ export default function ChatbotBuilderPage() {
   const router = useRouter();
   const { toast } = useToast();
   const t = useTranslations("ChatbotBuilder");
+  const tSidebar = useTranslations("FlowSidebar");
 
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
@@ -185,7 +188,7 @@ export default function ChatbotBuilderPage() {
       setEdges((eds) => eds.filter(edge => !selectedElements.edges.includes(edge.id)));
     }
     setSelectedElements({ nodes: [], edges: [] });
-  }, [selectedElements, toast]);
+  }, [selectedElements]);
 
   useEffect(() => {
     if (!chatbotId) return;
@@ -232,7 +235,7 @@ export default function ChatbotBuilderPage() {
                     node.data.sendMessage = true;
                 }
                 if (!node.data.message) {
-                    node.data.message = 'Thank you for chatting with us! Feel free to send a1her message if you need more help.';
+                    node.data.message = 'Thank you for chatting with us! Feel free to send another message if you need more help.';
                 }
                 node.data.onChange = (newData: object) => updateNodeData(node.id, newData);
             }
@@ -630,12 +633,12 @@ export default function ChatbotBuilderPage() {
     setSelectedNodeType(null);
     setIsSidebarOpen(false);
   
-  }, [selectedNodeType, reactFlowInstance, nodes, updateNodeData, toast]);
+  }, [selectedNodeType, reactFlowInstance, nodes, updateNodeData]);
 
   const handleNodeTypeSelect = useCallback((nodeType: string) => {
     setSelectedNodeType(nodeType);
     setIsSidebarOpen(false);
-  }, [toast]);
+  }, []);
 
   const handleCancelPlacement = useCallback(() => {
     setSelectedNodeType(null);
@@ -715,14 +718,14 @@ export default function ChatbotBuilderPage() {
         {/* Placement Mode Banner */}
         {selectedNodeType && (
           <div className="bg-primary text-primary-foreground px-4 py-2 flex items-center justify-between">
-            <span className="text-sm font-medium">Tap on canvas to place node</span>
+            <span className="text-sm font-medium">{tSidebar("placementMode")}</span>
             <Button
               variant="ghost"
               size="sm"
               onClick={handleCancelPlacement}
               className="text-primary-foreground hover:bg-primary-foreground/20"
             >
-              Cancel
+              {tSidebar("cancel")}
             </Button>
           </div>
         )}

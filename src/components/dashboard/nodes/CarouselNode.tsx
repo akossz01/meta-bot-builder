@@ -8,6 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useState } from 'react';
 import React from 'react';
+import { useTranslations } from 'next-intl';
 
 // Color palette for nodes - only border colors
 const NODE_COLORS = [
@@ -44,6 +45,7 @@ export function CarouselNode({ data, id }: NodeProps<CarouselNodeData>) {
   const { cards, color, onChange } = data;
   const borderColor = color || 'hsl(var(--border))';
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
+  const t = useTranslations("FlowNodes.carousel");
 
   const currentCard = cards[currentCardIndex] || cards[0];
 
@@ -199,7 +201,7 @@ export function CarouselNode({ data, id }: NodeProps<CarouselNodeData>) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Layers className="h-5 w-5 text-primary" />
-            <span className="text-sm font-semibold">Carousel</span>
+            <span className="text-sm font-semibold">{t("title")}</span>
           </div>
           <div className="flex items-center gap-1">
             <Button
@@ -229,41 +231,41 @@ export function CarouselNode({ data, id }: NodeProps<CarouselNodeData>) {
         {currentCard && (
           <>
             <div className="flex flex-col gap-2">
-              <Label className="text-xs">Title *</Label>
+              <Label className="text-xs">{t("titleLabel")} *</Label>
               <Input
                 value={currentCard.title}
                 onChange={(e) => updateCard(currentCardIndex, { title: e.target.value })}
                 className="nodrag"
-                placeholder="Card title"
+                placeholder={t("titlePlaceholder")}
                 maxLength={80}
               />
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label className="text-xs">Subtitle (optional)</Label>
+              <Label className="text-xs">{t("subtitleLabel")}</Label>
               <Textarea
                 value={currentCard.subtitle || ''}
                 onChange={(e) => updateCard(currentCardIndex, { subtitle: e.target.value })}
                 className="nodrag"
-                placeholder="Card description"
+                placeholder={t("subtitlePlaceholder")}
                 rows={2}
               />
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label className="text-xs">Image URL (optional)</Label>
+              <Label className="text-xs">{t("imageLabel")}</Label>
               <Input
                 value={currentCard.imageUrl || ''}
                 onChange={(e) => updateCard(currentCardIndex, { imageUrl: e.target.value })}
                 className="nodrag"
-                placeholder="https://example.com/image.jpg"
+                placeholder={t("imagePlaceholder")}
                 type="url"
               />
             </div>
 
             <div>
               <Label className="text-xs font-semibold">
-                Buttons ({currentCard.buttons.length} / 3)
+                {t("buttonsLabel")} ({currentCard.buttons.length} / 3)
               </Label>
               <div className="flex flex-col gap-3 mt-2">
                 {currentCard.buttons.map((button, btnIndex) => (
@@ -273,7 +275,7 @@ export function CarouselNode({ data, id }: NodeProps<CarouselNodeData>) {
                         value={button.title}
                         onChange={(e) => updateButton(currentCardIndex, btnIndex, 'title', e.target.value)}
                         className="nodrag flex-1"
-                        placeholder="Button text"
+                        placeholder={t("buttonPlaceholder")}
                         maxLength={20}
                       />
                       <Button 
@@ -296,8 +298,8 @@ export function CarouselNode({ data, id }: NodeProps<CarouselNodeData>) {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="web_url">Open URL</SelectItem>
-                        <SelectItem value="postback">Next Step</SelectItem>
+                        <SelectItem value="web_url">{t("buttonTypeUrl")}</SelectItem>
+                        <SelectItem value="postback">{t("buttonTypePostback")}</SelectItem>
                       </SelectContent>
                     </Select>
 
@@ -306,7 +308,7 @@ export function CarouselNode({ data, id }: NodeProps<CarouselNodeData>) {
                         value={button.url || ''}
                         onChange={(e) => updateButton(currentCardIndex, btnIndex, 'url', e.target.value)}
                         className="nodrag"
-                        placeholder="https://example.com"
+                        placeholder={t("urlPlaceholder")}
                         type="url"
                       />
                     )}
@@ -321,7 +323,7 @@ export function CarouselNode({ data, id }: NodeProps<CarouselNodeData>) {
                 disabled={currentCard.buttons.length >= 3}
               >
                 <PlusCircle className="h-4 w-4 mr-2" />
-                Add Button
+                {t("addButton")}
               </Button>
             </div>
 
@@ -334,7 +336,7 @@ export function CarouselNode({ data, id }: NodeProps<CarouselNodeData>) {
                 disabled={cards.length >= 10}
               >
                 <PlusCircle className="h-4 w-4 mr-1" />
-                Add Card
+                {t("addCard")}
               </Button>
               {cards.length > 1 && (
                 <Button
