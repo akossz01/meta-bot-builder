@@ -21,7 +21,7 @@ import ReactFlow, {
 import "reactflow/dist/style.css";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Save, Loader2, ArrowLeft, Menu, X } from "lucide-react";
+import { Save, Loader2, ArrowLeft, Menu, X, Trash2 } from "lucide-react";
 import { FlowBuilderSidebar } from "@/components/dashboard/FlowBuilderSidebar";
 import { QuickReplyNode } from '@/components/dashboard/nodes/QuickReplyNode';
 import { EndNode } from '@/components/dashboard/nodes/EndNode';
@@ -134,6 +134,7 @@ export default function ChatbotBuilderPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedNodeType, setSelectedNodeType] = useState<string | null>(null);
+  const [selectedElements, setSelectedElements] = useState<{ nodes: string[]; edges: string[] }>({ nodes: [], edges: [] });
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
 
@@ -172,6 +173,23 @@ export default function ChatbotBuilderPage() {
     (connection: Connection) => setEdges((eds) => addEdge(connection, eds)),
     [setEdges]
   );
+
+  const onSelectionChange = useCallback(({ nodes: selectedNodes, edges: selectedEdges }: { nodes: Node[]; edges: Edge[] }) => {
+    setSelectedElements({
+      nodes: selectedNodes.map(n => n.id),
+      edges: selectedEdges.map(e => e.id)
+    });
+  }, []);
+
+  const handleDeleteSelected = useCallback(() => {
+    if (selectedElements.nodes.length > 0) {
+      setNodes((nds) => nds.filter(node => !selectedElements.nodes.includes(node.id)));
+    }
+    if (selectedElements.edges.length > 0) {
+      setEdges((eds) => eds.filter(edge => !selectedElements.edges.includes(edge.id)));
+    }
+    setSelectedElements({ nodes: [], edges: [] });
+  }, [selectedElements, toast]);
 
   useEffect(() => {
     if (!chatbotId) return;
@@ -218,7 +236,7 @@ export default function ChatbotBuilderPage() {
                     node.data.sendMessage = true;
                 }
                 if (!node.data.message) {
-                    node.data.message = 'Thank you for chatting with us! Feel free to send another message if you need more help.';
+                    node.data.message = 'Thank you for chatting with us! Feel free to send a1her message if you need more help.';
                 }
                 node.data.onChange = (newData: object) => updateNodeData(node.id, newData);
             }
@@ -621,20 +639,12 @@ export default function ChatbotBuilderPage() {
     setNodes((nds) => nds.concat(newNode));
     setSelectedNodeType(null);
     setIsSidebarOpen(false);
-    
-    toast({
-      title: "Node Added",
-      description: "Tap anywhere to add another node, or close to finish",
-    });
+  
   }, [selectedNodeType, reactFlowInstance, nodes, updateNodeData, toast]);
 
   const handleNodeTypeSelect = useCallback((nodeType: string) => {
     setSelectedNodeType(nodeType);
     setIsSidebarOpen(false);
-    toast({
-      title: "Tap to Place",
-      description: "Tap anywhere on the canvas to place the node",
-    });
   }, [toast]);
 
   const handleCancelPlacement = useCallback(() => {
@@ -726,7 +736,7 @@ export default function ChatbotBuilderPage() {
           </div>
         )}
 
-        <div className="flex-1 min-h-0" ref={reactFlowWrapper}>
+        <div className="flex-1 min-h-0 relative" ref={reactFlowWrapper}>
           {isLoading ? (
             <div className="flex justify-center items-center h-full">
               <Loader2 className="h-8 w-8 animate-spin" />
@@ -738,6 +748,7 @@ export default function ChatbotBuilderPage() {
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
               onConnect={onConnect}
+              onSelectionChange={onSelectionChange}
               nodeTypes={nodeTypes}
               onInit={setReactFlowInstance}
               onDrop={onDrop}
@@ -748,22 +759,38 @@ export default function ChatbotBuilderPage() {
               minZoom={0.1}
               maxZoom={4}
               defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
-              panOnDrag={!selectedNodeType ? [1, 2] : false}
+              panOnDrag={selectedNodeType ? false : [1, 2]}
               panOnScroll={false}
-              zoomOnScroll={false}
+              zoomOnScroll={true}
               zoomOnPinch={true}
               zoomOnDoubleClick={false}
-              nodesDraggable={!selectedNodeType}
+              nodesDraggable={true}
               nodesConnectable={true}
               elementsSelectable={true}
-              selectNodesOnDrag={false}
-              panActivationKeyCode={null}
+              selectNodesOnDrag={true}
             >
               <Controls className="!bottom-4 !left-4" />
               <Background />
             </ReactFlow>
           )}
         </div>
+
+        {/* Mobile Delete Button - top right corner */}
+        {!isLoading && (selectedElements.nodes.length > 0 || selectedElements.edges.length > 0) && (
+          <div className="fixed top-20 right-4 z-[9999] md:hidden pointer-events-auto">
+            <Button
+              variant="destructive"
+              size="lg"
+              onClick={handleDeleteSelected}
+              className="shadow-2xl rounded-full h-14 w-14 p-0 border-4 border-background animate-in zoom-in-50 duration-200"
+            >
+              <Trash2 className="h-6 w-6" />
+            </Button>
+            <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center text-xs font-bold shadow-lg">
+              {selectedElements.nodes.length + selectedElements.edges.length}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
