@@ -281,8 +281,6 @@ export default function ChatbotsPage() {
                       {t("editFlow")}
                     </Button>
 
-                    <div className="flex flex-col gap-2 p-2 border rounded-lg">
-                      <Label className="text-xs font-semibold">{t("modeLabel")}</Label>
                       <Select
                         value={actualMode}
                         onValueChange={(value: 'active' | 'test' | 'inactive') => handleModeChange(chatbot._id, value)}
@@ -303,10 +301,6 @@ export default function ChatbotsPage() {
                           {t("deleting")}
                         </div>
                       )}
-                      <p className="text-xs text-muted-foreground">
-                        {t("modeDescription")}
-                      </p>
-                    </div>
 
                     {actualMode === 'test' && chatbot.testTrigger && (
                       <div className="p-2 bg-muted rounded text-xs">

@@ -7,16 +7,16 @@ import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-// Color palette for nodes
+// Color palette for nodes - only border colors
 const NODE_COLORS = [
-  { name: 'Default', value: '', border: '' },
-  { name: 'Blue', value: 'rgba(59, 130, 246, 0.1)', border: 'rgb(59, 130, 246)' },
-  { name: 'Green', value: 'rgba(34, 197, 94, 0.1)', border: 'rgb(34, 197, 94)' },
-  { name: 'Purple', value: 'rgba(168, 85, 247, 0.1)', border: 'rgb(168, 85, 247)' },
-  { name: 'Orange', value: 'rgba(249, 115, 22, 0.1)', border: 'rgb(249, 115, 22)' },
-  { name: 'Pink', value: 'rgba(236, 72, 153, 0.1)', border: 'rgb(236, 72, 153)' },
-  { name: 'Yellow', value: 'rgba(234, 179, 8, 0.1)', border: 'rgb(234, 179, 8)' },
-  { name: 'Red', value: 'rgba(239, 68, 68, 0.1)', border: 'rgb(239, 68, 68)' },
+  { name: 'Default', value: 'hsl(var(--border))' },
+  { name: 'Blue', value: 'rgb(59, 130, 246)' },
+  { name: 'Green', value: 'rgb(34, 197, 94)' },
+  { name: 'Purple', value: 'rgb(168, 85, 247)' },
+  { name: 'Orange', value: 'rgb(249, 115, 22)' },
+  { name: 'Pink', value: 'rgb(236, 72, 153)' },
+  { name: 'Yellow', value: 'rgb(234, 179, 8)' },
+  { name: 'Red', value: 'rgb(239, 68, 68)' },
 ];
 
 type CardButton = {
@@ -32,13 +32,12 @@ type CardNodeData = {
   imageUrl?: string;
   buttons: CardButton[];
   color?: string;
-  borderColor?: string;
   onChange: (data: Partial<CardNodeData>) => void;
 };
 
 export function CardNode({ data, id }: NodeProps<CardNodeData>) {
-  const { title, subtitle, imageUrl, buttons, color, borderColor, onChange } = data;
-  const displayBorderColor = borderColor || 'hsl(var(--border))';
+  const { title, subtitle, imageUrl, buttons, color, onChange } = data;
+  const borderColor = color || 'hsl(var(--border))';
 
   const handleButtonChange = (index: number, field: keyof CardButton, value: string) => {
     const newButtons = [...buttons];
@@ -90,8 +89,7 @@ export function CardNode({ data, id }: NodeProps<CardNodeData>) {
     <div 
       className="p-4 border-2 rounded-lg shadow-md w-80 relative bg-background"
       style={{ 
-        ...(color && { backgroundColor: color }),
-        borderColor: displayBorderColor,
+        borderColor: borderColor,
       }}
     >
       <Handle type="target" position={Position.Top} className="w-3 h-3 !bg-primary" />
@@ -102,7 +100,7 @@ export function CardNode({ data, id }: NodeProps<CardNodeData>) {
           <button
             className="absolute top-2 right-2 w-4 h-4 rounded-full border-2 cursor-pointer hover:scale-110 transition-transform nodrag z-10"
             style={{ 
-              backgroundColor: displayBorderColor,
+              backgroundColor: borderColor,
               borderColor: 'hsl(var(--background))'
             }}
             onClick={(e) => e.stopPropagation()}
@@ -115,13 +113,10 @@ export function CardNode({ data, id }: NodeProps<CardNodeData>) {
                 key={colorOption.name}
                 className="w-8 h-8 rounded-md border-2 hover:scale-110 transition-transform"
                 style={{
-                  backgroundColor: colorOption.value || 'hsl(var(--background))',
-                  borderColor: colorOption.border || 'hsl(var(--border))'
+                  backgroundColor: colorOption.value,
+                  borderColor: colorOption.value
                 }}
-                onClick={() => onChange({ 
-                  color: colorOption.value || undefined,
-                  borderColor: colorOption.border || undefined
-                })}
+                onClick={() => onChange({ color: colorOption.value })}
                 title={colorOption.name}
               />
             ))}

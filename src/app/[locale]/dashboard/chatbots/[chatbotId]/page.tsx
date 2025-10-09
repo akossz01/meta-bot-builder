@@ -35,30 +35,27 @@ import { MediaNode } from '@/components/dashboard/nodes/MediaNode';
 import { CarouselNode } from '@/components/dashboard/nodes/CarouselNode';
 import { useTranslations } from "next-intl";
 
-// Color palette for nodes
+// Color palette for nodes - only border colors
 const NODE_COLORS = [
-  { name: 'Default', value: '', border: '' }, // Empty strings mean use defaults
-  { name: 'Blue', value: 'rgba(59, 130, 246, 0.1)', border: 'rgb(59, 130, 246)' },
-  { name: 'Green', value: 'rgba(34, 197, 94, 0.1)', border: 'rgb(34, 197, 94)' },
-  { name: 'Purple', value: 'rgba(168, 85, 247, 0.1)', border: 'rgb(168, 85, 247)' },
-  { name: 'Orange', value: 'rgba(249, 115, 22, 0.1)', border: 'rgb(249, 115, 22)' },
-  { name: 'Pink', value: 'rgba(236, 72, 153, 0.1)', border: 'rgb(236, 72, 153)' },
-  { name: 'Yellow', value: 'rgba(234, 179, 8, 0.1)', border: 'rgb(234, 179, 8)' },
-  { name: 'Red', value: 'rgba(239, 68, 68, 0.1)', border: 'rgb(239, 68, 68)' },
+  { name: 'Default', value: 'hsl(var(--border))' },
+  { name: 'Blue', value: 'rgb(59, 130, 246)' },
+  { name: 'Green', value: 'rgb(34, 197, 94)' },
+  { name: 'Purple', value: 'rgb(168, 85, 247)' },
+  { name: 'Orange', value: 'rgb(249, 115, 22)' },
+  { name: 'Pink', value: 'rgb(236, 72, 153)' },
+  { name: 'Yellow', value: 'rgb(234, 179, 8)' },
+  { name: 'Red', value: 'rgb(239, 68, 68)' },
 ];
 
 // Custom Node for displaying and editing a message
 function MessageNode({ data }: NodeProps<{ message: string; waitForReply?: boolean; color?: string; borderColor?: string; onChange: (data: { message?: string; waitForReply?: boolean; color?: string; borderColor?: string }) => void }>) {
-  const backgroundColor = data.color || 'hsl(var(--background))';
-  const borderColor = data.borderColor || 'hsl(var(--border))';
-  const displayBorderColor = data.borderColor || 'hsl(var(--border))';
+  const borderColor = data.color || 'hsl(var(--border))';
 
   return (
     <div 
       className="p-4 border-2 rounded-lg shadow-md w-64 relative bg-background"
       style={{ 
-        ...(data.color && { backgroundColor }),
-        borderColor: displayBorderColor,
+        borderColor: borderColor,
       }}
     >
       <Handle type="target" position={Position.Top} className="w-2 h-2" />
@@ -69,7 +66,7 @@ function MessageNode({ data }: NodeProps<{ message: string; waitForReply?: boole
           <button
             className="absolute top-2 right-2 w-4 h-4 rounded-full border-2 cursor-pointer hover:scale-110 transition-transform nodrag"
             style={{ 
-              backgroundColor: displayBorderColor,
+              backgroundColor: borderColor,
               borderColor: 'hsl(var(--background))'
             }}
             onClick={(e) => e.stopPropagation()}
@@ -82,12 +79,11 @@ function MessageNode({ data }: NodeProps<{ message: string; waitForReply?: boole
                 key={colorOption.name}
                 className="w-8 h-8 rounded-md border-2 hover:scale-110 transition-transform"
                 style={{
-                  backgroundColor: colorOption.value || 'hsl(var(--background))',
-                  borderColor: colorOption.border || 'hsl(var(--border))'
+                  backgroundColor: colorOption.value,
+                  borderColor: colorOption.value
                 }}
                 onClick={() => data.onChange({ 
-                  color: colorOption.value || undefined,
-                  borderColor: colorOption.border || undefined
+                  color: colorOption.value
                 })}
                 title={colorOption.name}
               />
@@ -309,17 +305,15 @@ export default function ChatbotBuilderPage() {
             if (node.type === 'messageNode') {
                 cleanedData = { 
                     message: node.data.message,
-                    waitForReply: node.data.waitForReply !== false, // Explicitly save the value
-                    color: node.data.color,
-                    borderColor: node.data.borderColor
+                    waitForReply: node.data.waitForReply !== false,
+                    color: node.data.color
                 };
             } else if (node.type === 'quickReplyNode') {
                 cleanedData = { 
                     message: node.data.message, 
                     replies: node.data.replies,
-                    waitForReply: node.data.waitForReply !== false, // Explicitly save the value
-                    color: node.data.color,
-                    borderColor: node.data.borderColor
+                    waitForReply: node.data.waitForReply !== false,
+                    color: node.data.color
                 };
             } else if (node.type === 'endNode') {
                 cleanedData = { 
@@ -330,8 +324,7 @@ export default function ChatbotBuilderPage() {
             } else if (node.type === 'loopNode') {
                 cleanedData = { 
                     targetNodeId: node.data.targetNodeId,
-                    color: node.data.color,
-                    borderColor: node.data.borderColor
+                    color: node.data.color
                 };
             } else if (node.type === 'cardNode') {
                 cleanedData = { 
@@ -339,20 +332,17 @@ export default function ChatbotBuilderPage() {
                     subtitle: node.data.subtitle,
                     imageUrl: node.data.imageUrl,
                     buttons: node.data.buttons,
-                    color: node.data.color,
-                    borderColor: node.data.borderColor
+                    color: node.data.color
                 };
             } else if (node.type === 'mediaNode') {
                 cleanedData = { 
                     imageUrl: node.data.imageUrl,
-                    color: node.data.color,
-                    borderColor: node.data.borderColor
+                    color: node.data.color
                 };
             } else if (node.type === 'carouselNode') {
                 cleanedData = { 
                     cards: node.data.cards,
-                    color: node.data.color,
-                    borderColor: node.data.borderColor
+                    color: node.data.color
                 };
             } else {
                 // For other nodes like 'input'
@@ -652,7 +642,7 @@ export default function ChatbotBuilderPage() {
   }, []);
   
   return (
-    <div className="h-screen w-full flex flex-col md:grid md:grid-cols-[200px_1fr]">
+    <div className="h-screen w-full flex">
       {/* Mobile Overlay */}
       {isSidebarOpen && (
         <div 
@@ -664,10 +654,11 @@ export default function ChatbotBuilderPage() {
       {/* Sidebar - Mobile: fixed overlay, Desktop: static */}
       <aside className={`
         fixed md:static inset-y-0 left-0 z-50
-        w-[280px] md:w-auto
+        w-[340px] md:w-[320px] lg:w-[520px] xl:w-[600px]
         transform transition-transform duration-300 ease-in-out
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         bg-background border-r
+        flex-shrink-0
       `}>
         {/* Mobile Close Button */}
         <div className="flex justify-between items-center p-4 border-b md:hidden">

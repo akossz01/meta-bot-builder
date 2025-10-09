@@ -3,29 +3,28 @@ import { RotateCcw } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
-// Color palette for nodes
+// Color palette for nodes - only border colors
 const NODE_COLORS = [
-  { name: 'Default', value: '', border: 'rgb(59, 130, 246)' },
-  { name: 'Blue', value: 'rgba(59, 130, 246, 0.1)', border: 'rgb(59, 130, 246)' },
-  { name: 'Green', value: 'rgba(34, 197, 94, 0.1)', border: 'rgb(34, 197, 94)' },
-  { name: 'Purple', value: 'rgba(168, 85, 247, 0.1)', border: 'rgb(168, 85, 247)' },
-  { name: 'Orange', value: 'rgba(249, 115, 22, 0.1)', border: 'rgb(249, 115, 22)' },
-  { name: 'Pink', value: 'rgba(236, 72, 153, 0.1)', border: 'rgb(236, 72, 153)' },
-  { name: 'Yellow', value: 'rgba(234, 179, 8, 0.1)', border: 'rgb(234, 179, 8)' },
-  { name: 'Red', value: 'rgba(239, 68, 68, 0.1)', border: 'rgb(239, 68, 68)' },
+  { name: 'Default', value: 'rgb(59, 130, 246)' },
+  { name: 'Blue', value: 'rgb(59, 130, 246)' },
+  { name: 'Green', value: 'rgb(34, 197, 94)' },
+  { name: 'Purple', value: 'rgb(168, 85, 247)' },
+  { name: 'Orange', value: 'rgb(249, 115, 22)' },
+  { name: 'Pink', value: 'rgb(236, 72, 153)' },
+  { name: 'Yellow', value: 'rgb(234, 179, 8)' },
+  { name: 'Red', value: 'rgb(239, 68, 68)' },
 ];
 
 type LoopNodeData = {
   targetNodeId?: string;
   color?: string;
-  borderColor?: string;
   onChange?: (data: Partial<LoopNodeData>) => void;
   availableNodes?: Array<{ id: string; label: string }>;
 };
 
 export function LoopNode({ data }: NodeProps<LoopNodeData>) {
-  const { targetNodeId, color, borderColor, onChange, availableNodes = [] } = data;
-  const nodeBorderColor = borderColor || 'rgb(59, 130, 246)';
+  const { targetNodeId, color, onChange, availableNodes = [] } = data;
+  const borderColor = color || 'rgb(59, 130, 246)';
 
   const handleTargetChange = (value: string) => {
     if (onChange) {
@@ -37,11 +36,10 @@ export function LoopNode({ data }: NodeProps<LoopNodeData>) {
     <div 
       className="p-4 border-2 rounded-lg shadow-md w-56 relative bg-background"
       style={{ 
-        ...(color && { backgroundColor: color }),
-        borderColor: nodeBorderColor,
+        borderColor: borderColor,
       }}
     >
-      <Handle type="target" position={Position.Top} className="w-3 h-3" style={{ backgroundColor: nodeBorderColor }} />
+      <Handle type="target" position={Position.Top} className="w-3 h-3" style={{ backgroundColor: borderColor }} />
       
       {/* Color Picker Dot */}
       <Popover>
@@ -49,7 +47,7 @@ export function LoopNode({ data }: NodeProps<LoopNodeData>) {
           <button
             className="absolute top-2 right-2 w-4 h-4 rounded-full border-2 cursor-pointer hover:scale-110 transition-transform nodrag z-10"
             style={{ 
-              backgroundColor: nodeBorderColor,
+              backgroundColor: borderColor,
               borderColor: 'hsl(var(--background))'
             }}
             onClick={(e) => e.stopPropagation()}
@@ -62,15 +60,12 @@ export function LoopNode({ data }: NodeProps<LoopNodeData>) {
                 key={colorOption.name}
                 className="w-8 h-8 rounded-md border-2 hover:scale-110 transition-transform"
                 style={{
-                  backgroundColor: colorOption.value || 'hsl(var(--background))',
-                  borderColor: colorOption.border
+                  backgroundColor: colorOption.value,
+                  borderColor: colorOption.value
                 }}
                 onClick={() => {
                   if (onChange) {
-                    onChange({ 
-                      color: colorOption.value || undefined,
-                      borderColor: colorOption.border
-                    });
+                    onChange({ color: colorOption.value });
                   }
                 }}
                 title={colorOption.name}
@@ -81,7 +76,7 @@ export function LoopNode({ data }: NodeProps<LoopNodeData>) {
       </Popover>
 
       <div className="flex flex-col items-center gap-3">
-        <RotateCcw className="h-8 w-8" style={{ color: nodeBorderColor }} />
+        <RotateCcw className="h-8 w-8" style={{ color: borderColor }} />
         <span className="text-sm font-semibold text-center">Loop Back</span>
         <div className="w-full">
           <label className="text-xs text-muted-foreground block mb-1">Jump to:</label>
