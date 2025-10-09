@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useCallback, useEffect, useState, useMemo, useRef } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import ReactFlow, {
   Controls,
   Background,
@@ -20,7 +21,7 @@ import ReactFlow, {
 import "reactflow/dist/style.css";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Save, Loader2 } from "lucide-react";
+import { Save, Loader2, ArrowLeft } from "lucide-react";
 import { FlowBuilderSidebar } from "@/components/dashboard/FlowBuilderSidebar";
 import { QuickReplyNode } from '@/components/dashboard/nodes/QuickReplyNode';
 import { EndNode } from '@/components/dashboard/nodes/EndNode';
@@ -496,17 +497,22 @@ export default function ChatbotBuilderPage() {
     },
     [reactFlowInstance, nodes, updateNodeData]
   );
-
-  if (isLoading) {
-    return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>;
-  }
-
+  
   return (
-    <div className="h-[calc(100vh-5rem)] w-full grid grid-cols-[200px_1fr]">
+    <div className="h-screen w-full grid grid-cols-[200px_1fr]">
       <FlowBuilderSidebar />
       <div className="flex flex-col">
         <div className="flex justify-between items-center p-4 border-b">
-          <h1 className="text-2xl font-bold">{chatbotName}</h1>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => router.push("/dashboard/chatbots")}
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="text-2xl font-bold">{chatbotName}</h1>
+          </div>
           <Button onClick={handleSaveFlow} disabled={isSaving}>
             {isSaving ? (
               <>
@@ -522,22 +528,28 @@ export default function ChatbotBuilderPage() {
           </Button>
         </div>
         <div className="flex-1" ref={reactFlowWrapper}>
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            nodeTypes={nodeTypes}
-            onInit={setReactFlowInstance}
-            onDrop={onDrop}
-            onDragOver={onDragOver}
-            fitView
-            deleteKeyCode={['Backspace', 'Delete']}
-          >
-            <Controls />
-            <Background />
-          </ReactFlow>
+          {isLoading ? (
+            <div className="flex justify-center items-center h-full">
+              <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+          ) : (
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onConnect={onConnect}
+              nodeTypes={nodeTypes}
+              onInit={setReactFlowInstance}
+              onDrop={onDrop}
+              onDragOver={onDragOver}
+              fitView
+              deleteKeyCode={['Backspace', 'Delete']}
+            >
+              <Controls />
+              <Background />
+            </ReactFlow>
+          )}
         </div>
       </div>
     </div>
