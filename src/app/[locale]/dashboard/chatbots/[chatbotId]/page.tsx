@@ -21,7 +21,7 @@ import ReactFlow, {
 import "reactflow/dist/style.css";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Save, Loader2, ArrowLeft } from "lucide-react";
+import { Save, Loader2, ArrowLeft, Menu, X } from "lucide-react";
 import { FlowBuilderSidebar } from "@/components/dashboard/FlowBuilderSidebar";
 import { QuickReplyNode } from '@/components/dashboard/nodes/QuickReplyNode';
 import { EndNode } from '@/components/dashboard/nodes/EndNode';
@@ -132,6 +132,7 @@ export default function ChatbotBuilderPage() {
   const [chatbotName, setChatbotName] = useState("Loading...");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
 
@@ -499,35 +500,75 @@ export default function ChatbotBuilderPage() {
   );
   
   return (
-    <div className="h-screen w-full grid grid-cols-[200px_1fr]">
-      <FlowBuilderSidebar />
-      <div className="flex flex-col">
-        <div className="flex justify-between items-center p-4 border-b">
-          <div className="flex items-center gap-4">
+    <div className="h-screen w-full flex flex-col md:grid md:grid-cols-[200px_1fr]">
+      {/* Mobile Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar - Mobile: fixed overlay, Desktop: static */}
+      <aside className={`
+        fixed md:static inset-y-0 left-0 z-50
+        w-[280px] md:w-auto
+        transform transition-transform duration-300 ease-in-out
+        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        bg-background border-r
+      `}>
+        {/* Mobile Close Button */}
+        <div className="flex justify-between items-center p-4 border-b md:hidden">
+          <h3 className="text-lg font-bold">Nodes</h3>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsSidebarOpen(false)}
+          >
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+        <FlowBuilderSidebar />
+      </aside>
+
+      <div className="flex flex-col flex-1 min-w-0">
+        <div className="flex justify-between items-center p-3 md:p-4 border-b gap-2 flex-wrap">
+          <div className="flex items-center gap-2 md:gap-4 min-w-0 flex-1">
+            {/* Mobile Menu Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden shrink-0"
+              onClick={() => setIsSidebarOpen(true)}
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+            
             <Button
               variant="ghost"
               size="icon"
               onClick={() => router.push("/dashboard/chatbots")}
+              className="shrink-0"
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-2xl font-bold">{chatbotName}</h1>
+            <h1 className="text-lg md:text-2xl font-bold truncate">{chatbotName}</h1>
           </div>
-          <Button onClick={handleSaveFlow} disabled={isSaving}>
+          <Button onClick={handleSaveFlow} disabled={isSaving} className="shrink-0" size="sm">
             {isSaving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {t("saving")}
+                <span className="hidden sm:inline">{t("saving")}</span>
               </>
             ) : (
               <>
                 <Save className="mr-2 h-4 w-4" />
-                {t("saveButton")}
+                <span className="hidden sm:inline">{t("saveButton")}</span>
               </>
             )}
           </Button>
         </div>
-        <div className="flex-1" ref={reactFlowWrapper}>
+        <div className="flex-1 min-h-0" ref={reactFlowWrapper}>
           {isLoading ? (
             <div className="flex justify-center items-center h-full">
               <Loader2 className="h-8 w-8 animate-spin" />
@@ -545,8 +586,11 @@ export default function ChatbotBuilderPage() {
               onDragOver={onDragOver}
               fitView
               deleteKeyCode={['Backspace', 'Delete']}
+              minZoom={0.1}
+              maxZoom={4}
+              defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
             >
-              <Controls />
+              <Controls className="!bottom-4 !left-4" />
               <Background />
             </ReactFlow>
           )}
