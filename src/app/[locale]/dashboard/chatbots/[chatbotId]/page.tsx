@@ -133,6 +133,7 @@ export default function ChatbotBuilderPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [selectedNodeType, setSelectedNodeType] = useState<string | null>(null);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
 
@@ -498,6 +499,147 @@ export default function ChatbotBuilderPage() {
     },
     [reactFlowInstance, nodes, updateNodeData]
   );
+
+  const onPaneClick = useCallback((event: React.MouseEvent | React.TouchEvent) => {
+    // Only handle placement mode, not regular clicks
+    if (!selectedNodeType || !reactFlowInstance || !reactFlowWrapper.current) return;
+
+    // Prevent if clicking on a node
+    const target = event.target as HTMLElement;
+    if (target.closest('.react-flow__node')) return;
+
+    const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
+    
+    // Handle both mouse and touch events
+    const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX;
+    const clientY = 'touches' in event ? event.touches[0].clientY : event.clientY;
+
+    const position = reactFlowInstance.project({
+      x: clientX - reactFlowBounds.left,
+      y: clientY - reactFlowBounds.top,
+    });
+
+    // Generate a unique ID
+    const existingIds = nodes.map(n => parseInt(n.id)).filter(id => !isNaN(id));
+    const maxId = existingIds.length > 0 ? Math.max(...existingIds) : 0;
+    const newNodeId = (maxId + 1).toString();
+    
+    let newNode: Node;
+
+    if (selectedNodeType === 'mediaNode') {
+      newNode = {
+        id: newNodeId,
+        type: selectedNodeType,
+        position,
+        data: { 
+          imageUrl: '',
+          onChange: (data: object) => updateNodeData(newNodeId, data) 
+        },
+      };
+    } else if (selectedNodeType === 'carouselNode') {
+      newNode = {
+        id: newNodeId,
+        type: selectedNodeType,
+        position,
+        data: { 
+          cards: [{
+            title: 'Card 1',
+            subtitle: '',
+            imageUrl: '',
+            buttons: [{ title: 'Learn More', type: 'web_url', url: '' }]
+          }],
+          onChange: (data: object) => updateNodeData(newNodeId, data) 
+        },
+      };
+    } else if (selectedNodeType === 'cardNode') {
+      newNode = {
+        id: newNodeId,
+        type: selectedNodeType,
+        position,
+        data: { 
+          title: 'Card Title',
+          subtitle: '',
+          imageUrl: '',
+          buttons: [{ title: 'Learn More', type: 'web_url', url: '' }],
+          onChange: (data: object) => updateNodeData(newNodeId, data) 
+        },
+      };
+    } else if (selectedNodeType === 'quickReplyNode') {
+      newNode = {
+        id: newNodeId,
+        type: selectedNodeType,
+        position,
+        data: { 
+          message: 'Ask a question', 
+          replies: [{title: 'Option 1'}], 
+          waitForReply: true,
+          onChange: (data: object) => updateNodeData(newNodeId, data) 
+        },
+      };
+    } else if (selectedNodeType === 'endNode') {
+      newNode = {
+        id: newNodeId,
+        type: selectedNodeType,
+        position,
+        data: { 
+          label: 'End',
+          message: 'Thank you for chatting with us! Feel free to send another message if you need more help.',
+          sendMessage: true,
+          onChange: (data: object) => updateNodeData(newNodeId, data)
+        },
+      };
+    } else if (selectedNodeType === 'loopNode') {
+      const availableNodes = nodes
+        .filter((n) => n.type !== 'loopNode' && n.type !== 'endNode')
+        .map((n) => ({
+          id: n.id,
+          label: n.data.label || n.data.message?.substring(0, 20) || `Node ${n.id}`
+        }));
+      newNode = {
+        id: newNodeId,
+        type: selectedNodeType,
+        position,
+        data: { 
+          targetNodeId: '', 
+          availableNodes,
+          onChange: (data: object) => updateNodeData(newNodeId, data) 
+        },
+      };
+    } else { // messageNode
+      newNode = {
+        id: newNodeId,
+        type: selectedNodeType,
+        position,
+        data: { 
+          message: `New message ${newNodeId}`, 
+          waitForReply: true,
+          onChange: (data: object) => updateNodeData(newNodeId, data) 
+        },
+      };
+    }
+
+    setNodes((nds) => nds.concat(newNode));
+    setSelectedNodeType(null);
+    setIsSidebarOpen(false);
+    
+    toast({
+      title: "Node Added",
+      description: "Tap anywhere to add another node, or close to finish",
+    });
+  }, [selectedNodeType, reactFlowInstance, nodes, updateNodeData, toast]);
+
+  const handleNodeTypeSelect = useCallback((nodeType: string) => {
+    setSelectedNodeType(nodeType);
+    setIsSidebarOpen(false);
+    toast({
+      title: "Tap to Place",
+      description: "Tap anywhere on the canvas to place the node",
+    });
+  }, [toast]);
+
+  const handleCancelPlacement = useCallback(() => {
+    setSelectedNodeType(null);
+  }, []);
   
   return (
     <div className="h-screen w-full flex flex-col md:grid md:grid-cols-[200px_1fr]">
@@ -528,7 +670,7 @@ export default function ChatbotBuilderPage() {
             <X className="h-5 w-5" />
           </Button>
         </div>
-        <FlowBuilderSidebar />
+        <FlowBuilderSidebar onNodeTypeSelect={handleNodeTypeSelect} />
       </aside>
 
       <div className="flex flex-col flex-1 min-w-0">
@@ -568,6 +710,22 @@ export default function ChatbotBuilderPage() {
             )}
           </Button>
         </div>
+
+        {/* Placement Mode Banner */}
+        {selectedNodeType && (
+          <div className="bg-primary text-primary-foreground px-4 py-2 flex items-center justify-between">
+            <span className="text-sm font-medium">Tap on canvas to place node</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleCancelPlacement}
+              className="text-primary-foreground hover:bg-primary-foreground/20"
+            >
+              Cancel
+            </Button>
+          </div>
+        )}
+
         <div className="flex-1 min-h-0" ref={reactFlowWrapper}>
           {isLoading ? (
             <div className="flex justify-center items-center h-full">
@@ -584,11 +742,22 @@ export default function ChatbotBuilderPage() {
               onInit={setReactFlowInstance}
               onDrop={onDrop}
               onDragOver={onDragOver}
+              onPaneClick={onPaneClick}
               fitView
               deleteKeyCode={['Backspace', 'Delete']}
               minZoom={0.1}
               maxZoom={4}
               defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
+              panOnDrag={!selectedNodeType ? [1, 2] : false}
+              panOnScroll={false}
+              zoomOnScroll={false}
+              zoomOnPinch={true}
+              zoomOnDoubleClick={false}
+              nodesDraggable={!selectedNodeType}
+              nodesConnectable={true}
+              elementsSelectable={true}
+              selectNodesOnDrag={false}
+              panActivationKeyCode={null}
             >
               <Controls className="!bottom-4 !left-4" />
               <Background />
