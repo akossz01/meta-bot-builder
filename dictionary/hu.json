@@ -27,6 +27,44 @@
       },
       "footer": {
         "copyright": "Minden jog fenntartva."
+      },
+      "pricing": {
+        "title": "Árazás, Olyan Egyszerű, Mint a Folyamataid",
+        "description": "Válassz egy csomagot, ami veled együtt növekszik. Nincsenek meglepetések.",
+        "toggle": {
+          "monthly": "Havi",
+          "yearly": "Éves",
+          "save": "2 hónap ajándék"
+        },
+        "pro": {
+          "planName": "Pro",
+          "description": "Kisvállalkozásoknak és marketingeseknek, akik erőteljes automatizálásra vágynak.",
+          "f1": "1 000 üzenet / hó",
+          "f2": "Teljes hozzáférés a Folyamatépítőhöz",
+          "f3": "100 MI kredit / hó",
+          "f4": "E-mail és chat támogatás",
+          "cta": "Indítsd el a Pro csomagot"
+        },
+        "business": {
+          "planName": "Business",
+          "description": "Ügynökségeknek és haladó felhasználóknak, akiknek korlátlan skálázhatóság és MI kell.",
+          "f1": "Korlátlan üzenet",
+          "f2": "Minden, ami a Pro-ban",
+          "f3": "1 000 MI kredit / hó",
+          "f4": "Elsőbbségi támogatás",
+          "cta": "Válts Business-re"
+        },
+        "addons": {
+          "title": "Több MI Erőforrásra van szükséged?",
+          "description": "Töltsd fel MI kreditjeidet bármikor. A vásárlástól számítva egy évig érvényesek.",
+          "pack1": {
+        "credits": "1 000 MI kredit"
+          },
+          "pack2": {
+        "credits": "10 000 MI kredit"
+          },
+          "disclaimer": "*A havi/éves csomagokban foglalt MI kreditek nem vihetők át. A feltöltött kreditek 12 hónapig érvényesek."
+        }
       }
     },
     "Auth": {

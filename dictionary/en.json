@@ -27,6 +27,44 @@
     },
     "footer": {
       "copyright": "All rights reserved."
+    },
+    "pricing": {
+      "title": "Pricing as Simple as Your Flows",
+      "description": "Choose a plan that scales with you. No surprises.",
+      "toggle": {
+        "monthly": "Monthly",
+        "yearly": "Yearly",
+        "save": "Save 2 months"
+      },
+      "pro": {
+        "planName": "Pro",
+        "description": "For small businesses & marketers who need powerful automation.",
+        "f1": "1,000 Messages / month",
+        "f2": "Full access to the Flow Builder",
+        "f3": "100 AI Credits / month",
+        "f4": "Email & Chat Support",
+        "cta": "Start Your Pro Plan"
+      },
+      "business": {
+        "planName": "Business",
+        "description": "For agencies & power-users who need unlimited scale and AI.",
+        "f1": "Unlimited Messages",
+        "f2": "Everything in Pro",
+        "f3": "1,000 AI Credits / month",
+        "f4": "Priority Support",
+        "cta": "Go Business"
+      },
+      "addons": {
+        "title": "Need More AI Power?",
+        "description": "Top up your AI credits anytime. They're valid for one year from purchase.",
+        "pack1": {
+          "credits": "1,000 AI Credits"
+        },
+        "pack2": {
+          "credits": "10,000 AI Credits"
+        },
+        "disclaimer": "*AI credits included in monthly/yearly plans do not roll over. Top-up credits are valid for 12 months."
+      }
     }
   },
   "Auth": {

@@ -27,6 +27,44 @@
       },
       "footer": {
         "copyright": "Toate drepturile rezervate."
+      },
+      "pricing": {
+        "title": "Prețuri la fel de simple ca și fluxurile tale",
+        "description": "Alege un plan care crește odată cu tine. Fără surprize.",
+        "toggle": {
+          "monthly": "Lunar",
+          "yearly": "Anual",
+          "save": "Economisești 2 luni"
+        },
+        "pro": {
+          "planName": "Pro",
+          "description": "Pentru afaceri mici și marketeri care au nevoie de automatizare puternică.",
+          "f1": "1.000 mesaje / lună",
+          "f2": "Acces complet la Flow Builder",
+          "f3": "100 credite AI / lună",
+          "f4": "Suport pe email & chat",
+          "cta": "Începe Planul Pro"
+        },
+        "business": {
+          "planName": "Business",
+          "description": "Pentru agenții și utilizatori avansați care au nevoie de scalare nelimitată și AI.",
+          "f1": "Mesaje nelimitate",
+          "f2": "Tot din Pro",
+          "f3": "1.000 credite AI / lună",
+          "f4": "Suport prioritar",
+          "cta": "Alege Business"
+        },
+        "addons": {
+          "title": "Ai nevoie de mai multă putere AI?",
+          "description": "Încarcă-ți creditele AI oricând. Sunt valabile un an de la achiziție.",
+          "pack1": {
+        "credits": "1.000 credite AI"
+          },
+          "pack2": {
+        "credits": "10.000 credite AI"
+          },
+          "disclaimer": "*Creditele AI incluse în planurile lunare/anuale nu se reportează. Creditele suplimentare sunt valabile 12 luni."
+        }
       }
     },
     "Auth": {

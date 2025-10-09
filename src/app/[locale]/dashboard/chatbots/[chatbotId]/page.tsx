@@ -759,6 +759,7 @@ export default function ChatbotBuilderPage() {
               nodesConnectable={true}
               elementsSelectable={true}
               selectNodesOnDrag={true}
+              proOptions={{ hideAttribution: true }}
             >
               <Controls className="!bottom-4 !left-4" />
               <Background />
